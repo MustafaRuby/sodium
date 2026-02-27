@@ -1,7 +1,7 @@
 package me.jellysquid.mods.sodium.client.data.fingerprint;
 
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
+import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraft.client.Minecraft;
 import org.apache.commons.codec.binary.Hex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +16,8 @@ public record FingerprintMeasure(@NotNull String uuid, @NotNull String path) {
     private static final int SALT_LENGTH = 64;
 
     public static @Nullable FingerprintMeasure create() {
-        var uuid = MinecraftClient.getInstance().getSession().getUuidOrNull();
-        var path = FabricLoader.getInstance().getGameDir();
+        var uuid = Minecraft.getInstance().getUser().getProfileId();
+        var path = FMLPaths.GAMEDIR.get();
 
         if (uuid == null || path == null) {
             return null;

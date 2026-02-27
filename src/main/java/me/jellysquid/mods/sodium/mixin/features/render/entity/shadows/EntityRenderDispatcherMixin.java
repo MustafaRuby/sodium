@@ -5,19 +5,19 @@ import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,7 +36,7 @@ public class EntityRenderDispatcherMixin {
      * @reason Reduce vertex assembly overhead for shadow rendering
      */
     @Inject(method = "renderShadowPart", at = @At("HEAD"), cancellable = true)
-    private static void renderShadowPartFast(MatrixStack.Entry entry, VertexConsumer vertices, Chunk chunk, WorldView world, BlockPos pos, double x, double y, double z, float radius, float opacity, CallbackInfo ci) {
+    private static void renderShadowPartFast(PoseStack.Entry entry, VertexConsumer vertices, Chunk chunk, LevelReader world, BlockPos pos, double x, double y, double z, float radius, float opacity, CallbackInfo ci) {
         var writer = VertexConsumerUtils.convertOrLog(vertices);
 
         if (writer == null) {
@@ -48,7 +48,7 @@ public class EntityRenderDispatcherMixin {
         BlockPos blockPos = pos.down();
         BlockState blockState = world.getBlockState(blockPos);
 
-        if (blockState.getRenderType() == BlockRenderType.INVISIBLE || !blockState.isFullCube(world, blockPos)) {
+        if (blockState.getRenderType() == RenderShape.INVISIBLE || !blockState.isFullCube(world, blockPos)) {
             return;
         }
 
@@ -64,7 +64,7 @@ public class EntityRenderDispatcherMixin {
             return;
         }
 
-        float brightness = LightmapTextureManager.getBrightness(world.getDimension(), light);
+        float brightness = LightTexture.getShade(world.getDimension(), light);
         float alpha = (float) (((double) opacity - ((y - (double) pos.getY()) / 2.0)) * 0.5 * (double) brightness);
 
         if (alpha >= 0.0F) {
@@ -87,7 +87,7 @@ public class EntityRenderDispatcherMixin {
     }
 
     @Unique
-    private static void renderShadowPart(MatrixStack.Entry matrices, VertexBufferWriter writer, float radius, float alpha, float minX, float maxX, float minY, float minZ, float maxZ) {
+    private static void renderShadowPart(PoseStack.Entry matrices, VertexBufferWriter writer, float radius, float alpha, float minX, float maxX, float minY, float minZ, float maxZ) {
         float size = 0.5F * (1.0F / radius);
 
         float u1 = (-minX * size) + 0.5F;
@@ -129,6 +129,6 @@ public class EntityRenderDispatcherMixin {
         float yt = MatrixHelper.transformPositionY(matPosition, x, y, z);
         float zt = MatrixHelper.transformPositionZ(matPosition, x, y, z);
 
-        ModelVertex.write(ptr, xt, yt, zt, color, u, v, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, normal);
+        ModelVertex.write(ptr, xt, yt, zt, color, u, v, LightTexture.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, normal);
     }
 }

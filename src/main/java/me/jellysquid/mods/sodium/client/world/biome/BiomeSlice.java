@@ -3,22 +3,22 @@ package me.jellysquid.mods.sodium.client.world.biome;
 import me.jellysquid.mods.sodium.client.world.BiomeSeedProvider;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import me.jellysquid.mods.sodium.client.world.cloned.ChunkRenderContext;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeKeys;
-import net.minecraft.world.biome.source.BiomeCoords;
-import net.minecraft.world.biome.source.SeedMixer;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Holder;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.biome.BiomeResolver;
+import net.minecraft.world.level.biome.Climate;
 
 public class BiomeSlice {
     private static final int SIZE = 3 * 4; // 3 chunks * 4 biomes per chunk
 
     // Arrays are in ZYX order
     @SuppressWarnings("unchecked")
-    private final RegistryEntry<Biome>[] biomes = new RegistryEntry[SIZE * SIZE * SIZE];
+    private final Holder<Biome>[] biomes = new Holder[SIZE * SIZE * SIZE];
     private final boolean[] uniform = new boolean[SIZE * SIZE * SIZE];
     private final BiasMap bias = new BiasMap();
 
@@ -26,10 +26,10 @@ public class BiomeSlice {
 
     private int worldX, worldY, worldZ;
 
-    public void update(ClientWorld world, ChunkRenderContext context) {
-        this.worldX = context.getOrigin().getMinX() - 16;
-        this.worldY = context.getOrigin().getMinY() - 16;
-        this.worldZ = context.getOrigin().getMinZ() - 16;
+    public void update(ClientLevel world, ChunkRenderContext context) {
+        this.worldX = context.getOrigin().minX() - 16;
+        this.worldY = context.getOrigin().minY() - 16;
+        this.worldZ = context.getOrigin().minZ() - 16;
 
         this.biomeSeed = BiomeSeedProvider.getBiomeSeed(world);
 
@@ -39,7 +39,7 @@ public class BiomeSlice {
         this.calculateUniform();
     }
 
-    private void copyBiomeData(World world, ChunkRenderContext context) {
+    private void copyBiomeData(Level world, ChunkRenderContext context) {
         var defaultValue = world.getRegistryManager()
                 .get(RegistryKeys.BIOME)
                 .entryOf(BiomeKeys.PLAINS);
@@ -53,7 +53,7 @@ public class BiomeSlice {
         }
     }
 
-    private void copySectionBiomeData(ChunkRenderContext context, int sectionX, int sectionY, int sectionZ, RegistryEntry<Biome> defaultBiome) {
+    private void copySectionBiomeData(ChunkRenderContext context, int sectionX, int sectionY, int sectionZ, Holder<Biome> defaultBiome) {
         var section = context.getSections()[WorldSlice.getLocalSectionIndex(sectionX, sectionY, sectionZ)];
         var biomeData = section.getBiomeData();
 
@@ -95,15 +95,15 @@ public class BiomeSlice {
 
         for (int cellX = 1; cellX < 11; cellX++) {
             int worldCellX = offsetX + cellX;
-            long seedX = SeedMixer.mixSeed(seed, worldCellX);
+            long seedX = Climate.mixSeed(seed, worldCellX);
 
             for (int cellY = 1; cellY < 11; cellY++) {
                 int worldCellY = offsetY + cellY;
-                long seedXY = SeedMixer.mixSeed(seedX, worldCellY);
+                long seedXY = Climate.mixSeed(seedX, worldCellY);
 
                 for (int cellZ = 1; cellZ < 11; cellZ++) {
                     int worldCellZ = offsetZ + cellZ;
-                    long seedXYZ = SeedMixer.mixSeed(seedXY, worldCellZ);
+                    long seedXYZ = Climate.mixSeed(seedXY, worldCellZ);
 
                     this.calculateBias(dataArrayIndex(cellX, cellY, cellZ),
                             worldCellX, worldCellY, worldCellZ, seedXYZ);
@@ -114,12 +114,12 @@ public class BiomeSlice {
     }
 
     private void calculateBias(int index, int x, int y, int z, long seed) {
-        seed = SeedMixer.mixSeed(seed, x);
-        seed = SeedMixer.mixSeed(seed, y);
-        seed = SeedMixer.mixSeed(seed, z);
+        seed = Climate.mixSeed(seed, x);
+        seed = Climate.mixSeed(seed, y);
+        seed = Climate.mixSeed(seed, z);
 
-        var gradX = getBias(seed); seed = SeedMixer.mixSeed(seed, this.biomeSeed);
-        var gradY = getBias(seed); seed = SeedMixer.mixSeed(seed, this.biomeSeed);
+        var gradX = getBias(seed); seed = Climate.mixSeed(seed, this.biomeSeed);
+        var gradY = getBias(seed); seed = Climate.mixSeed(seed, this.biomeSeed);
         var gradZ = getBias(seed);
 
         this.bias.set(index, gradX, gradY, gradZ);
@@ -145,7 +145,7 @@ public class BiomeSlice {
         return true;
     }
 
-    public RegistryEntry<Biome> getBiome(int x, int y, int z) {
+    public Holder<Biome> getBiome(int x, int y, int z) {
         int relX = x - this.worldX;
         int relY = y - this.worldY;
         int relZ = z - this.worldZ;
@@ -162,7 +162,7 @@ public class BiomeSlice {
         return this.getBiomeUsingVoronoi(relX, relY, relZ);
     }
 
-    private RegistryEntry<Biome> getBiomeUsingVoronoi(int worldX, int worldY, int worldZ) {
+    private Holder<Biome> getBiomeUsingVoronoi(int worldX, int worldY, int worldZ) {
         int x = worldX - 2;
         int y = worldY - 2;
         int z = worldZ - 2;
@@ -200,9 +200,9 @@ public class BiomeSlice {
             float biasY = biasToVector(this.bias.getY(biasIndex));
             float biasZ = biasToVector(this.bias.getZ(biasIndex));
 
-            float distanceX = MathHelper.square(adjFracX + biasX);
-            float distanceY = MathHelper.square(adjFracY + biasY);
-            float distanceZ = MathHelper.square(adjFracZ + biasZ);
+            float distanceX = Mth.square(adjFracX + biasX);
+            float distanceY = Mth.square(adjFracY + biasY);
+            float distanceZ = Mth.square(adjFracZ + biasZ);
 
             float distance = distanceX + distanceY + distanceZ;
 

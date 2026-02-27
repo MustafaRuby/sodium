@@ -7,22 +7,22 @@ import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.caffeinemc.mods.sodium.api.util.ColorMixer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.CloudRenderMode;
-import net.minecraft.client.render.*;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ShaderInstance;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.CloudStatus;
+import net.minecraft.client.renderer.*;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL30C;
@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class CloudRenderer {
-    private static final Identifier CLOUDS_TEXTURE_ID = new Identifier("textures/environment/clouds.png");
+    private static final ResourceLocation CLOUDS_TEXTURE_ID = new ResourceLocation("textures/environment/clouds.png");
 
     private static final int CLOUD_COLOR_NEG_Y = ColorABGR.pack(0.7F, 0.7F, 0.7F, 1.0f);
     private static final int CLOUD_COLOR_POS_Y = ColorABGR.pack(1.0f, 1.0f, 1.0f, 1.0f);
@@ -50,17 +50,17 @@ public class CloudRenderer {
 
     private VertexBuffer vertexBuffer;
     private CloudEdges edges;
-    private ShaderProgram shader;
-    private final BackgroundRenderer.FogData fogData = new BackgroundRenderer.FogData(BackgroundRenderer.FogType.FOG_TERRAIN);
+    private ShaderInstance shader;
+    private final FogRenderer.FogData fogData = new FogRenderer.FogData(FogRenderer.FogType.FOG_TERRAIN);
 
     private int prevCenterCellX, prevCenterCellY, cachedRenderDistance;
-    private CloudRenderMode cloudRenderMode;
+    private CloudStatus cloudRenderMode;
 
     public CloudRenderer(ResourceManager resourceManager) {
         this.reloadTextures(resourceManager);
     }
 
-    public void render(@Nullable ClientWorld level, ClientPlayerEntity player, MatrixStack matrices, Matrix4f projectionMatrix, float ticks, float tickDelta, double cameraX, double cameraY, double cameraZ) {
+    public void render(@Nullable ClientLevel level, LocalPlayer player, PoseStack matrices, Matrix4f projectionMatrix, float ticks, float tickDelta, double cameraX, double cameraY, double cameraZ) {
         if (level == null || edges.isBlank) {
             return;
         }
@@ -72,23 +72,23 @@ public class CloudRenderer {
             return;
         }
 
-        Vec3d color = level.getCloudsColor(tickDelta);
+        Vec3 color = level.getCloudsColor(tickDelta);
 
         double cloudTime = (ticks + tickDelta) * 0.03F;
         double cloudCenterX = (cameraX + cloudTime);
         double cloudCenterZ = (cameraZ) + 0.33D;
 
-        int renderDistance = MinecraftClient.getInstance().options.getClampedViewDistance();
+        int renderDistance = Minecraft.getInstance().options.getClampedViewDistance();
         int cloudDistance = Math.max(32, (renderDistance * 2) + 9);
 
         int centerCellX = (int) (Math.floor(cloudCenterX / 12));
         int centerCellZ = (int) (Math.floor(cloudCenterZ / 12));
 
-        if (this.vertexBuffer == null || this.prevCenterCellX != centerCellX || this.prevCenterCellY != centerCellZ || this.cachedRenderDistance != renderDistance || cloudRenderMode != MinecraftClient.getInstance().options.getCloudRenderModeValue()) {
+        if (this.vertexBuffer == null || this.prevCenterCellX != centerCellX || this.prevCenterCellY != centerCellZ || this.cachedRenderDistance != renderDistance || cloudRenderMode != Minecraft.getInstance().options.getCloudStatusValue()) {
             BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
-            bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+            bufferBuilder.begin(VertexFormat.DrawMode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-            this.cloudRenderMode = MinecraftClient.getInstance().options.getCloudRenderModeValue();
+            this.cloudRenderMode = Minecraft.getInstance().options.getCloudStatusValue();
 
             this.rebuildGeometry(bufferBuilder, cloudDistance, centerCellX, centerCellZ);
 
@@ -125,7 +125,7 @@ public class CloudRenderer {
         this.vertexBuffer.bind();
 
         boolean insideClouds = cameraY < cloudHeight + 4.5f && cameraY > cloudHeight - 0.5f;
-        boolean fastClouds = cloudRenderMode == CloudRenderMode.FAST;
+        boolean fastClouds = cloudRenderMode == CloudStatus.FAST;
 
         if (insideClouds || fastClouds) {
             RenderSystem.disableCull();
@@ -133,8 +133,8 @@ public class CloudRenderer {
             RenderSystem.enableCull();
         }
 
-        if (MinecraftClient.isFabulousGraphicsOrBetter()) {
-            MinecraftClient.getInstance().worldRenderer.getCloudsFramebuffer().beginWrite(false);
+        if (Minecraft.isFabulousGraphicsOrBetter()) {
+            Minecraft.getInstance().worldRenderer.getCloudsFramebuffer().beginWrite(false);
         }
 
         RenderSystem.setShaderColor((float) color.x, (float) color.y, (float) color.z, 0.8f);
@@ -171,16 +171,16 @@ public class CloudRenderer {
         RenderSystem.enableCull();
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        if (MinecraftClient.isFabulousGraphicsOrBetter()) {
-            MinecraftClient.getInstance().getFramebuffer().beginWrite(false);
+        if (Minecraft.isFabulousGraphicsOrBetter()) {
+            Minecraft.getInstance().getFramebuffer().beginWrite(false);
         }
 
         RenderSystem.setShaderFogEnd(previousEnd);
         RenderSystem.setShaderFogStart(previousStart);
     }
 
-    private void applyFogModifiers(ClientWorld world, BackgroundRenderer.FogData fogData, ClientPlayerEntity player, int cloudDistance, float tickDelta) {
-        GameRenderer renderer = MinecraftClient.getInstance().gameRenderer;
+    private void applyFogModifiers(ClientLevel world, FogRenderer.FogData fogData, LocalPlayer player, int cloudDistance, float tickDelta) {
+        GameRenderer renderer = Minecraft.getInstance().gameRenderer;
         Camera camera = renderer.getCamera();
         CameraSubmersionType fogType = camera.getSubmersionType();
 
@@ -188,7 +188,7 @@ public class CloudRenderer {
             if (player.isSpectator()) {
                 fogData.fogStart = -8.0f;
                 fogData.fogEnd = (cloudDistance) * 0.5f;
-            } else if (player.hasStatusEffect(StatusEffects.FIRE_RESISTANCE)) {
+            } else if (player.hasStatusEffect(MobEffects.FIRE_RESISTANCE)) {
                 fogData.fogStart = 0.0f;
                 fogData.fogEnd = 3.0f;
             } else {
@@ -213,19 +213,19 @@ public class CloudRenderer {
                 fogData.fogShape = FogShape.CYLINDER;
             }
         } else {
-            Vec3d position = camera.getPos();
+            Vec3 position = camera.getPos();
 
-            if (world.getDimensionEffects().useThickFog(MathHelper.floor(position.x), MathHelper.floor(position.z)) ||
-                    MinecraftClient.getInstance().inGameHud.getBossBarHud().shouldThickenFog()) {
+            if (world.getDimensionEffects().useThickFog(Mth.floor(position.x), Mth.floor(position.z)) ||
+                    Minecraft.getInstance().inGameHud.getBossBarHud().shouldThickenFog()) {
                 fogData.fogStart = (cloudDistance) * 0.05f;
                 fogData.fogEnd = Math.min((cloudDistance), 192.0f) * 0.5f;
             }
         }
 
-        BackgroundRenderer.StatusEffectFogModifier fogModifier = BackgroundRenderer.getFogModifier(player, tickDelta);
+        FogRenderer.StatusEffectFogModifier fogModifier = FogRenderer.getFogModifier(player, tickDelta);
 
         if (fogModifier != null) {
-            StatusEffectInstance statusEffectInstance = player.getStatusEffect(fogModifier.getStatusEffect());
+            MobEffectInstance statusEffectInstance = player.getStatusEffect(fogModifier.getStatusEffect());
 
             if (statusEffectInstance != null) {
                 fogModifier.applyStartEndModifier(fogData, player, statusEffectInstance, (cloudDistance * 8), tickDelta);
@@ -235,7 +235,7 @@ public class CloudRenderer {
 
     private void rebuildGeometry(BufferBuilder bufferBuilder, int cloudDistance, int centerCellX, int centerCellZ) {
         var writer = VertexBufferWriter.of(bufferBuilder);
-        var fastClouds = this.cloudRenderMode == CloudRenderMode.FAST;
+        var fastClouds = this.cloudRenderMode == CloudStatus.FAST;
 
         for (int offsetCellX = -cloudDistance; offsetCellX < cloudDistance; offsetCellX++) {
             for (int offsetCellZ = -cloudDistance; offsetCellZ < cloudDistance; offsetCellZ++) {
@@ -354,7 +354,7 @@ public class CloudRenderer {
         this.edges = createCloudEdges();
 
         try {
-            this.shader = new ShaderProgram(resourceManager, "clouds", VertexFormats.POSITION_COLOR);
+            this.shader = new ShaderInstance(resourceManager, "clouds", DefaultVertexFormat.POSITION_COLOR);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -373,7 +373,7 @@ public class CloudRenderer {
     }
 
     private static CloudEdges createCloudEdges() {
-        ResourceManager resourceManager = MinecraftClient.getInstance().getResourceManager();
+        ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
         Resource resource = resourceManager.getResource(CLOUDS_TEXTURE_ID)
                 .orElseThrow();
 
@@ -393,7 +393,7 @@ public class CloudRenderer {
         private boolean isBlank;
 
         public CloudEdges(NativeImage texture) {
-            int width = texture.getWidth();
+            int width = texture.width();
             int height = texture.getHeight();
 
             this.faces = new byte[width * height];
@@ -469,7 +469,7 @@ public class CloudRenderer {
         }
 
         private static int getNeighborTexel(NativeImage image, int x, int z) {
-            x = wrapTexelCoord(x, 0, image.getWidth() - 1);
+            x = wrapTexelCoord(x, 0, image.width() - 1);
             z = wrapTexelCoord(z, 0, image.getHeight() - 1);
 
             return image.getColor(x, z);

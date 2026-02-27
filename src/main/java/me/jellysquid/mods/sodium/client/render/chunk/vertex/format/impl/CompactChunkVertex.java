@@ -6,7 +6,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.shader.ChunkShaderBindingPo
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkMeshAttribute;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexType;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 import org.lwjgl.system.MemoryUtil;
 
 public class CompactChunkVertex implements ChunkVertexType {
@@ -108,8 +108,8 @@ public class CompactChunkVertex implements ChunkVertexType {
     }
 
     private static int encodeLight(int light) {
-        int sky = MathHelper.clamp((light >>> 16) & 0xFF, 8, 248);
-        int block = MathHelper.clamp((light >>>  0) & 0xFF, 8, 248);
+        int sky = Mth.clamp((light >>> 16) & 0xFF, 8, 248);
+        int block = Mth.clamp((light >>>  0) & 0xFF, 8, 248);
 
         return (block << 0) | (sky << 8);
     }

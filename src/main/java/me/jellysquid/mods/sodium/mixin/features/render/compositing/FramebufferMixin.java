@@ -2,7 +2,7 @@ package me.jellysquid.mods.sodium.mixin.features.render.compositing;
 
 
 import net.caffeinemc.mods.sodium.client.compatibility.workarounds.Workarounds;
-import net.minecraft.client.gl.Framebuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import org.lwjgl.opengl.GL32C;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Framebuffer.class)
+@Mixin(RenderTarget.class)
 public class FramebufferMixin {
     @Shadow
     public int fbo;

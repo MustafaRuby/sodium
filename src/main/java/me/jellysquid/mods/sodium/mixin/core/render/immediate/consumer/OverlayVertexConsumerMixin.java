@@ -7,9 +7,9 @@ import net.caffeinemc.mods.sodium.api.vertex.attributes.common.ColorAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.TextureAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.format.VertexFormatDescription;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.minecraft.client.render.OverlayVertexConsumer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.renderer.SheetedDecalTextureGenerator;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.core.Direction;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(OverlayVertexConsumer.class)
+@Mixin(SheetedDecalTextureGenerator.class)
 public class OverlayVertexConsumerMixin implements VertexBufferWriter {
     @Shadow
     @Final

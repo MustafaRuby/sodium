@@ -7,12 +7,12 @@ import net.caffeinemc.mods.sodium.api.vertex.format.common.ColorVertex;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.WorldGenerationProgressTracker;
-import net.minecraft.client.gui.screen.LevelLoadingScreen;
-import net.minecraft.client.render.*;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.ChunkProgressListener;
+import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import net.minecraft.client.renderer.*;
 
-import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.*;
@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.*;
  */
 @Mixin(LevelLoadingScreen.class)
 public class LevelLoadingScreenMixin {
-    @Mutable
+    @MutableBlockPos
     @Shadow
     @Final
     private static Object2IntMap<ChunkStatus> STATUS_TO_COLOR;
@@ -47,7 +47,7 @@ public class LevelLoadingScreenMixin {
      * @author JellySquid
      */
     @Overwrite
-    public static void drawChunkMap(DrawContext drawContext, WorldGenerationProgressTracker tracker, int mapX, int mapY, int mapScale, int mapPadding) {
+    public static void drawChunkMap(GuiGraphics drawContext, ChunkProgressListener tracker, int mapX, int mapY, int mapScale, int mapPadding) {
         if (STATUS_TO_COLOR_FAST == null) {
             STATUS_TO_COLOR_FAST = new Reference2IntOpenHashMap<>(STATUS_TO_COLOR.size());
             STATUS_TO_COLOR_FAST.put(null, NULL_STATUS_COLOR);
@@ -65,7 +65,7 @@ public class LevelLoadingScreenMixin {
         RenderSystem.defaultBlendFunc();
         
         BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         var writer = VertexBufferWriter.of(bufferBuilder);
 

@@ -6,30 +6,33 @@ import me.jellysquid.mods.sodium.client.data.fingerprint.HashedFingerprint;
 import me.jellysquid.mods.sodium.client.gui.console.Console;
 import me.jellysquid.mods.sodium.client.gui.console.message.MessageLevel;
 import me.jellysquid.mods.sodium.client.util.FlawlessFrames;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.text.Text;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.ModList;
+import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class SodiumClientMod implements ClientModInitializer {
+@Mod("sodium")
+public class SodiumClientMod {
     private static SodiumGameOptions CONFIG;
     private static Logger LOGGER;
 
     private static String MOD_VERSION;
 
-    @Override
-    public void onInitializeClient() {
-        ModContainer mod = FabricLoader.getInstance()
-                .getModContainer("sodium")
-                .orElseThrow(NullPointerException::new);
+    public SodiumClientMod() {
+        FMLJavaModLoadingContext.get().getModEventBus()
+                .addListener(this::onClientSetup);
+    }
 
-        MOD_VERSION = mod.getMetadata()
-                .getVersion()
-                .getFriendlyString();
+    private void onClientSetup(FMLClientSetupEvent event) {
+        MOD_VERSION = ModList.get()
+                .getModContainerById("sodium")
+                .map(c -> c.getModInfo().getVersion().toString())
+                .orElse("unknown");
 
         LOGGER = LoggerFactory.getLogger("Sodium");
         CONFIG = loadConfig();
@@ -66,7 +69,7 @@ public class SodiumClientMod implements ClientModInitializer {
             LOGGER.error("Failed to load configuration file", e);
             LOGGER.error("Using default configuration file in read-only mode");
 
-            Console.instance().logMessage(MessageLevel.SEVERE, Text.translatable("sodium.console.config_not_loaded"), 12.5);
+            Console.instance().logMessage(MessageLevel.SEVERE, Component.translatable("sodium.console.config_not_loaded"), 12.5);
 
             var config = SodiumGameOptions.defaults();
             config.setReadOnly();

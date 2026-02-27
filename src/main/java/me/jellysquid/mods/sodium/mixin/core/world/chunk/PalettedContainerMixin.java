@@ -2,8 +2,8 @@ package me.jellysquid.mods.sodium.mixin.core.world.chunk;
 
 import me.jellysquid.mods.sodium.client.world.PaletteStorageExtended;
 import me.jellysquid.mods.sodium.client.world.ReadableContainerExtended;
-import net.minecraft.world.chunk.PalettedContainer;
-import net.minecraft.world.chunk.ReadableContainer;
+import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.PalettedContainerRO;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,7 +18,7 @@ public abstract class PalettedContainerMixin<T> implements ReadableContainerExte
 
     @Shadow
     @Final
-    private PalettedContainer.PaletteProvider paletteProvider;
+    private PalettedContainer.PalettedContainer.Strategy paletteProvider;
 
     @Shadow
     public abstract PalettedContainer<T> copy();
@@ -65,7 +65,7 @@ public abstract class PalettedContainerMixin<T> implements ReadableContainerExte
     }
 
     @Override
-    public ReadableContainer<T> sodium$copy() {
+    public PalettedContainerRO<T> sodium$copy() {
         return this.copy();
     }
 }

@@ -1,9 +1,9 @@
 package me.jellysquid.mods.sodium.mixin.features.world.biome;
 
 import me.jellysquid.mods.sodium.client.world.biome.BiomeColorMaps;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeEffects;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSpecialEffects;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -113,8 +113,8 @@ public abstract class BiomeMixin {
 
     @Unique
     private int getDefaultColorIndex() {
-        double temperature = MathHelper.clamp(this.weather.temperature(), 0.0F, 1.0F);
-        double humidity = MathHelper.clamp(this.weather.downfall(), 0.0F, 1.0F);
+        double temperature = Mth.clamp(this.weather.temperature(), 0.0F, 1.0F);
+        double humidity = Mth.clamp(this.weather.downfall(), 0.0F, 1.0F);
 
         return BiomeColorMaps.getIndex(temperature, humidity);
     }

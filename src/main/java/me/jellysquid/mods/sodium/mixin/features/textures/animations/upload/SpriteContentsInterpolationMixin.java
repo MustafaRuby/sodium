@@ -3,8 +3,8 @@ package me.jellysquid.mods.sodium.mixin.features.textures.animations.upload;
 import me.jellysquid.mods.sodium.client.util.NativeImageHelper;
 import me.jellysquid.mods.sodium.mixin.features.textures.SpriteContentsInvoker;
 import net.caffeinemc.mods.sodium.api.util.ColorMixer;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.SpriteContents;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.SpriteContents;
 import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(SpriteContents.Interpolation.class)
+@Mixin(SpriteContents.InterpolationData.class)
 public class SpriteContentsInterpolationMixin {
     @Shadow
     @Final
@@ -39,10 +39,10 @@ public class SpriteContentsInterpolationMixin {
      * @reason Drastic optimizations
      */
     @Overwrite
-    void apply(int x, int y, SpriteContents.AnimatorImpl arg) {
-        SpriteContents.Animation animation = ((SpriteContentsAnimatorImplAccessor) arg).getAnimation();
+    void apply(int x, int y, SpriteContents.Ticker arg) {
+        SpriteContents.AnimatedTexture animation = ((SpriteContentsAnimatorImplAccessor) arg).getAnimation();
         SpriteContentsAnimationAccessor animation2 = (SpriteContentsAnimationAccessor) ((SpriteContentsAnimatorImplAccessor) arg).getAnimation();
-        List<SpriteContents.AnimationFrame> frames = ((SpriteContentsAnimationAccessor) animation).getFrames();
+        List<SpriteContents.FrameInfo> frames = ((SpriteContentsAnimationAccessor) animation).getFrames();
         SpriteContentsAnimatorImplAccessor accessor = (SpriteContentsAnimatorImplAccessor) arg;
         SpriteContentsAnimationFrameAccessor animationFrame = (SpriteContentsAnimationFrameAccessor) frames.get(accessor.getFrameIndex());
 
@@ -57,7 +57,7 @@ public class SpriteContentsInterpolationMixin {
         float mix = 1.0F - (float) accessor.getFrameTicks() / (float) animationFrame.getTime();
 
         for (int layer = 0; layer < this.images.length; layer++) {
-            int width = this.parent.getWidth() >> layer;
+            int width = this.parent.width() >> layer;
             int height = this.parent.getHeight() >> layer;
 
             int curX = ((curIndex % animation2.getFrameCount()) * width);
@@ -74,8 +74,8 @@ public class SpriteContentsInterpolationMixin {
 
             for (int layerY = 0; layerY < height; layerY++) {
                 // Pointers to the pixel array for the current and next frame
-                long pRgba1 = ppSrcPixel + (curX + (long) (curY + layerY) * src.getWidth()) * STRIDE;
-                long pRgba2 = ppSrcPixel + (nextX + (long) (nextY + layerY) * src.getWidth()) * STRIDE;
+                long pRgba1 = ppSrcPixel + (curX + (long) (curY + layerY) * src.width()) * STRIDE;
+                long pRgba2 = ppSrcPixel + (nextX + (long) (nextY + layerY) * src.width()) * STRIDE;
 
                 for (int layerX = 0; layerX < width; layerX++) {
                     int rgba1 = MemoryUtil.memGetInt(pRgba1);

@@ -2,7 +2,7 @@ package me.jellysquid.mods.sodium.mixin.features.textures.animations.tracking;
 
 import me.jellysquid.mods.sodium.client.SodiumClientMod;
 import me.jellysquid.mods.sodium.client.render.texture.SpriteContentsExtended;
-import net.minecraft.client.texture.SpriteContents;
+import net.minecraft.client.renderer.texture.SpriteContents;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,13 +13,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(SpriteContents.AnimatorImpl.class)
+@Mixin(SpriteContents.Ticker.class)
 public class SpriteContentsAnimatorImplMixin {
     @Shadow
     int currentTime;
     @Shadow
     @Final
-    SpriteContents.Animation animation;
+    SpriteContents.AnimatedTexture animation;
     @Shadow
     int frame;
 
@@ -31,7 +31,7 @@ public class SpriteContentsAnimatorImplMixin {
      * @reason Replace fragile Shadow
      */
     @Inject(method = "<init>", at = @At("RETURN"))
-    public void assignParent(SpriteContents spriteContents, SpriteContents.Animation animation, SpriteContents.Interpolation interpolation, CallbackInfo ci) {
+    public void assignParent(SpriteContents spriteContents, SpriteContents.AnimatedTexture animation, SpriteContents.InterpolationData interpolation, CallbackInfo ci) {
         this.parent = spriteContents;
     }
 
@@ -43,7 +43,7 @@ public class SpriteContentsAnimatorImplMixin {
 
         if (onDemand && !parent.sodium$isActive()) {
             this.currentTime++;
-            List<SpriteContents.AnimationFrame> frames = ((SpriteContentsAnimationAccessor)this.animation).getFrames();
+            List<SpriteContents.FrameInfo> frames = ((SpriteContentsAnimationAccessor)this.animation).getFrames();
             if (this.currentTime >= ((SpriteContentsAnimationFrameAccessor)frames.get(this.frame)).getTime()) {
                 this.frame = (this.frame + 1) % frames.size();
                 this.currentTime = 0;

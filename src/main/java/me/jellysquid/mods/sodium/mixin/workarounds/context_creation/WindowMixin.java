@@ -7,9 +7,9 @@ import net.caffeinemc.mods.sodium.client.compatibility.workarounds.nvidia.Nvidia
 import net.caffeinemc.mods.sodium.client.platform.NativeWindowHandle;
 import net.minecraft.client.WindowEventHandler;
 import net.minecraft.client.WindowSettings;
-import net.minecraft.client.util.MonitorTracker;
-import net.minecraft.client.util.Window;
-import net.minecraft.util.Util;
+import net.minecraft.client.renderer.VirtualScreen;
+import com.mojang.blaze3d.platform.Window;
+import net.minecraft.Util;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.WGL;
 import org.lwjgl.system.MemoryUtil;
@@ -43,7 +43,7 @@ private static Logger LOGGER;
     }
 
     @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL;createCapabilities()Lorg/lwjgl/opengl/GLCapabilities;", shift = At.Shift.AFTER))
-    private void postWindowCreated(WindowEventHandler eventHandler, MonitorTracker monitorTracker, WindowSettings settings, String videoMode, String title, CallbackInfo ci) {
+    private void postWindowCreated(WindowEventHandler eventHandler, VirtualScreen monitorTracker, WindowSettings settings, String videoMode, String title, CallbackInfo ci) {
         GlContextInfo context = GlContextInfo.create();
         LOGGER.info("OpenGL Vendor: {}", context.vendor());
         LOGGER.info("OpenGL Renderer: {}", context.renderer());

@@ -20,23 +20,24 @@ import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEn
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import me.jellysquid.mods.sodium.client.util.DirectionUtil;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SideShapeType;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.SupportType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import org.apache.commons.lang3.mutable.MutableFloat;
 import org.apache.commons.lang3.mutable.MutableInt;
 
@@ -46,7 +47,7 @@ public class FluidRenderer {
     private static final float EPSILON = 0.001f;
     private static final float ALIGNED_EQUALS_EPSILON = 0.011f;
 
-    private final BlockPos.Mutable scratchPos = new BlockPos.Mutable();
+    private final BlockPos.MutableBlockPos scratchPos = new BlockPos.MutableBlockPos();
     private final MutableFloat scratchHeight = new MutableFloat(0);
     private final MutableInt scratchSamples = new MutableInt();
 
@@ -67,31 +68,31 @@ public class FluidRenderer {
         this.colorProviderRegistry = colorProviderRegistry;
     }
 
-    private boolean isFluidOccluded(BlockRenderView world, int x, int y, int z, Direction dir, Fluid fluid) {
-        var adjPos = this.scratchPos.set(x + dir.getOffsetX(), y + dir.getOffsetY(), z + dir.getOffsetZ());
+    private boolean isFluidOccluded(BlockAndTintGetter world, int x, int y, int z, Direction dir, Fluid fluid) {
+        var adjPos = this.scratchPos.set(x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ());
         BlockState blockState = world.getBlockState(adjPos);
-        if (blockState.getFluidState().getFluid().matchesType(fluid)) {
+        if (blockState.getFluidState().getFluid().isSame(fluid)) {
             return true;
         }
-        return blockState.isOpaque() && dir != Direction.UP && blockState.isSideSolid(world, adjPos, dir.getOpposite(), SideShapeType.FULL);
+        return blockState.canOcclude() && dir != Direction.UP && blockState.isFaceSturdy(world, adjPos, dir.getOpposite(), SupportType.FULL);
     }
 
 
-    private boolean isSideExposed(BlockRenderView world, int x, int y, int z, Direction dir, float height) {
-        BlockPos pos = this.scratchPos.set(x + dir.getOffsetX(), y + dir.getOffsetY(), z + dir.getOffsetZ());
+    private boolean isSideExposed(BlockAndTintGetter world, int x, int y, int z, Direction dir, float height) {
+        BlockPos pos = this.scratchPos.set(x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ());
         BlockState blockState = world.getBlockState(pos);
 
-        if (blockState.isOpaque()) {
-            VoxelShape shape = blockState.getCullingShape(world, pos);
+        if (blockState.canOcclude()) {
+            VoxelShape shape = blockState.getOcclusionShape(world, pos);
 
             // Hoist these checks to avoid allocating the shape below
             if (shape.isEmpty()) {
                 return true;
             }
 
-            VoxelShape threshold = VoxelShapes.cuboid(0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D);
+            VoxelShape threshold = Shapes.cuboid(0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D);
 
-            return !VoxelShapes.isSideCovered(threshold, shape, dir);
+            return !Shapes.isSideCovered(threshold, shape, dir);
         }
 
         return true;
@@ -123,12 +124,12 @@ public class FluidRenderer {
             return;
         }
 
-        boolean isWater = fluidState.isIn(FluidTags.WATER);
+        boolean isWater = fluidState.is(FluidTags.WATER);
 
-        final FluidRenderHandler handler = getFluidRenderHandler(fluidState);
-        final ColorProvider<FluidState> colorProvider = this.getColorProvider(fluid, handler);
+        final IClientFluidTypeExtensions fluidTypeExtensions = IClientFluidTypeExtensions.of(fluidState);
+        final ColorProvider<FluidState> colorProvider = this.getColorProvider(fluid, fluidTypeExtensions);
 
-        Sprite[] sprites = handler.getFluidSprites(world, blockPos, fluidState);
+        TextureAtlasSprite[] sprites = getFluidSprites(fluidTypeExtensions, fluidState);
 
         float fluidHeight = this.fluidHeight(world, fluid, blockPos, Direction.UP);
         float northWestHeight, southWestHeight, southEastHeight, northEastHeight;
@@ -138,7 +139,7 @@ public class FluidRenderer {
             southEastHeight = 1.0f;
             northEastHeight = 1.0f;
         } else {
-            var scratchPos = new BlockPos.Mutable();
+            var scratchPos = new BlockPos.MutableBlockPos();
             float heightNorth = this.fluidHeight(world, fluid, scratchPos.set(blockPos, Direction.NORTH), Direction.NORTH);
             float heightSouth = this.fluidHeight(world, fluid, scratchPos.set(blockPos, Direction.SOUTH), Direction.SOUTH);
             float heightEast = this.fluidHeight(world, fluid, scratchPos.set(blockPos, Direction.EAST), Direction.EAST);
@@ -160,7 +161,7 @@ public class FluidRenderer {
 
         final ModelQuadViewMutable quad = this.quad;
 
-        LightMode lightMode = isWater && MinecraftClient.isAmbientOcclusionEnabled() ? LightMode.SMOOTH : LightMode.FLAT;
+        LightMode lightMode = isWater && Minecraft.useAmbientOcclusion() ? LightMode.SMOOTH : LightMode.FLAT;
         LightPipeline lighter = this.lighters.getLighter(lightMode);
 
         quad.setFlags(0);
@@ -171,9 +172,9 @@ public class FluidRenderer {
             southEastHeight -= EPSILON;
             northEastHeight -= EPSILON;
 
-            Vec3d velocity = fluidState.getVelocity(world, blockPos);
+            Vec3 velocity = fluidState.getFlow(world, blockPos);
 
-            Sprite sprite;
+            TextureAtlasSprite sprite;
             ModelQuadFacing facing;
             float u1, u2, u3, u4;
             float v1, v2, v3, v4;
@@ -181,44 +182,44 @@ public class FluidRenderer {
             if (velocity.x == 0.0D && velocity.z == 0.0D) {
                 sprite = sprites[0];
                 facing = ModelQuadFacing.POS_Y;
-                u1 = sprite.getFrameU(0.0D);
-                v1 = sprite.getFrameV(0.0D);
+                u1 = sprite.getU(0.0D);
+                v1 = sprite.getV(0.0D);
                 u2 = u1;
-                v2 = sprite.getFrameV(16.0D);
-                u3 = sprite.getFrameU(16.0D);
+                v2 = sprite.getV(16.0D);
+                u3 = sprite.getU(16.0D);
                 v3 = v2;
                 u4 = u3;
                 v4 = v1;
             } else {
                 sprite = sprites[1];
                 facing = ModelQuadFacing.UNASSIGNED;
-                float dir = (float) MathHelper.atan2(velocity.z, velocity.x) - (1.5707964f);
-                float sin = MathHelper.sin(dir) * 0.25F;
-                float cos = MathHelper.cos(dir) * 0.25F;
-                u1 = sprite.getFrameU(8.0F + (-cos - sin) * 16.0F);
-                v1 = sprite.getFrameV(8.0F + (-cos + sin) * 16.0F);
-                u2 = sprite.getFrameU(8.0F + (-cos + sin) * 16.0F);
-                v2 = sprite.getFrameV(8.0F + (cos + sin) * 16.0F);
-                u3 = sprite.getFrameU(8.0F + (cos + sin) * 16.0F);
-                v3 = sprite.getFrameV(8.0F + (cos - sin) * 16.0F);
-                u4 = sprite.getFrameU(8.0F + (cos - sin) * 16.0F);
-                v4 = sprite.getFrameV(8.0F + (-cos - sin) * 16.0F);
+                float dir = (float) Mth.atan2(velocity.z, velocity.x) - (1.5707964f);
+                float sin = Mth.sin(dir) * 0.25F;
+                float cos = Mth.cos(dir) * 0.25F;
+                u1 = sprite.getU(8.0F + (-cos - sin) * 16.0F);
+                v1 = sprite.getV(8.0F + (-cos + sin) * 16.0F);
+                u2 = sprite.getU(8.0F + (-cos + sin) * 16.0F);
+                v2 = sprite.getV(8.0F + (cos + sin) * 16.0F);
+                u3 = sprite.getU(8.0F + (cos + sin) * 16.0F);
+                v3 = sprite.getV(8.0F + (cos - sin) * 16.0F);
+                u4 = sprite.getU(8.0F + (cos - sin) * 16.0F);
+                v4 = sprite.getV(8.0F + (-cos - sin) * 16.0F);
             }
 
             float uAvg = (u1 + u2 + u3 + u4) / 4.0F;
             float vAvg = (v1 + v2 + v3 + v4) / 4.0F;
-            float s1 = (float) sprites[0].getContents().getWidth() / (sprites[0].getMaxU() - sprites[0].getMinU());
-            float s2 = (float) sprites[0].getContents().getHeight() / (sprites[0].getMaxV() - sprites[0].getMinV());
+            float s1 = (float) sprites[0].contents().width() / (sprites[0].getU1() - sprites[0].getU0());
+            float s2 = (float) sprites[0].contents().getHeight() / (sprites[0].getV1() - sprites[0].getV0());
             float s3 = 4.0F / Math.max(s2, s1);
 
-            u1 = MathHelper.lerp(s3, u1, uAvg);
-            u2 = MathHelper.lerp(s3, u2, uAvg);
-            u3 = MathHelper.lerp(s3, u3, uAvg);
-            u4 = MathHelper.lerp(s3, u4, uAvg);
-            v1 = MathHelper.lerp(s3, v1, vAvg);
-            v2 = MathHelper.lerp(s3, v2, vAvg);
-            v3 = MathHelper.lerp(s3, v3, vAvg);
-            v4 = MathHelper.lerp(s3, v4, vAvg);
+            u1 = Mth.lerp(s3, u1, uAvg);
+            u2 = Mth.lerp(s3, u2, uAvg);
+            u3 = Mth.lerp(s3, u3, uAvg);
+            u4 = Mth.lerp(s3, u4, uAvg);
+            v1 = Mth.lerp(s3, v1, vAvg);
+            v2 = Mth.lerp(s3, v2, vAvg);
+            v3 = Mth.lerp(s3, v3, vAvg);
+            v4 = Mth.lerp(s3, v4, vAvg);
 
             quad.setSprite(sprite);
 
@@ -258,12 +259,12 @@ public class FluidRenderer {
         }
 
         if (!sfDown) {
-            Sprite sprite = sprites[0];
+            TextureAtlasSprite sprite = sprites[0];
 
-            float minU = sprite.getMinU();
-            float maxU = sprite.getMaxU();
-            float minV = sprite.getMinV();
-            float maxV = sprite.getMaxV();
+            float minU = sprite.getU0();
+            float maxU = sprite.getU1();
+            float minV = sprite.getV0();
+            float maxV = sprite.getV1();
             quad.setSprite(sprite);
 
             setVertex(quad, 0, 0.0f, yOffset, 1.0F, minU, maxV);
@@ -337,11 +338,11 @@ public class FluidRenderer {
             }
 
             if (this.isSideExposed(world, posX, posY, posZ, dir, Math.max(c1, c2))) {
-                int adjX = posX + dir.getOffsetX();
-                int adjY = posY + dir.getOffsetY();
-                int adjZ = posZ + dir.getOffsetZ();
+                int adjX = posX + dir.getStepX();
+                int adjY = posY + dir.getStepY();
+                int adjZ = posZ + dir.getStepZ();
 
-                Sprite sprite = sprites[1];
+                TextureAtlasSprite sprite = sprites[1];
 
                 boolean isOverlay = false;
 
@@ -349,17 +350,19 @@ public class FluidRenderer {
                     BlockPos adjPos = this.scratchPos.set(adjX, adjY, adjZ);
                     BlockState adjBlock = world.getBlockState(adjPos);
 
-                    if (FluidRenderHandlerRegistry.INSTANCE.isBlockTransparent(adjBlock.getBlock())) {
+                    // On Forge, check if the adjacent block is not a full opaque cube
+                    // to determine if we should render the overlay sprite
+                    if (!adjBlock.isSolidBlock(world, adjPos)) {
                         sprite = sprites[2];
                         isOverlay = true;
                     }
                 }
 
-                float u1 = sprite.getFrameU(0.0D);
-                float u2 = sprite.getFrameU(8.0D);
-                float v1 = sprite.getFrameV((1.0F - c1) * 16.0F * 0.5F);
-                float v2 = sprite.getFrameV((1.0F - c2) * 16.0F * 0.5F);
-                float v3 = sprite.getFrameV(8.0D);
+                float u1 = sprite.getU(0.0D);
+                float u2 = sprite.getU(8.0D);
+                float v1 = sprite.getV((1.0F - c1) * 16.0F * 0.5F);
+                float v2 = sprite.getV((1.0F - c2) * 16.0F * 0.5F);
+                float v3 = sprite.getV(8.0D);
 
                 quad.setSprite(sprite);
 
@@ -383,25 +386,33 @@ public class FluidRenderer {
         }
     }
 
-    private ColorProvider<FluidState> getColorProvider(Fluid fluid, FluidRenderHandler handler) {
+    private ColorProvider<FluidState> getColorProvider(Fluid fluid, IClientFluidTypeExtensions fluidTypeExtensions) {
         var override = this.colorProviderRegistry.getColorProvider(fluid);
 
         if (override != null) {
             return override;
         }
 
-        return DefaultColorProviders.adapt(handler);
+        return DefaultColorProviders.adapt(fluidTypeExtensions);
     }
 
-    private static FluidRenderHandler getFluidRenderHandler(FluidState fluidState) {
-        FluidRenderHandler handler = FluidRenderHandlerRegistry.INSTANCE.get(fluidState.getFluid());
+    private static TextureAtlasSprite[] getFluidSprites(IClientFluidTypeExtensions extensions, FluidState fluidState) {
+        ResourceLocation still = extensions.getStillTexture(fluidState);
+        ResourceLocation flowing = extensions.getFlowingTexture(fluidState);
+        ResourceLocation overlay = extensions.getOverlayTexture(fluidState);
 
-        // Match the vanilla FluidRenderer's behavior if the handler is null
-        if (handler == null) {
-            boolean isLava = fluidState.isIn(FluidTags.LAVA);
-            handler = FluidRenderHandlerRegistry.INSTANCE.get(isLava ? Fluids.LAVA : Fluids.WATER);
+        TextureAtlas atlas = Minecraft.getInstance()
+                .getModelManager()
+                .getAtlas(TextureAtlas.BLOCK_ATLAS_TEXTURE);
+
+        TextureAtlasSprite stillSprite = atlas.getSprite(still);
+        TextureAtlasSprite flowingSprite = atlas.getSprite(flowing);
+
+        if (overlay != null) {
+            return new TextureAtlasSprite[] { stillSprite, flowingSprite, atlas.getSprite(overlay) };
         }
-        return handler;
+
+        return new TextureAtlasSprite[] { stillSprite, flowingSprite };
     }
 
     private void updateQuad(ModelQuadView quad, WorldSlice world, BlockPos pos, LightPipeline lighter, Direction dir, float brightness,
@@ -434,7 +445,7 @@ public class FluidRenderer {
             out.light = this.quadLightData.lm[i];
         }
 
-        Sprite sprite = quad.getSprite();
+        TextureAtlasSprite sprite = quad.getSprite();
 
         if (sprite != null) {
             builder.addSprite(sprite);
@@ -452,7 +463,7 @@ public class FluidRenderer {
         quad.setTexV(i, v);
     }
 
-    private float fluidCornerHeight(BlockRenderView world, Fluid fluid, float fluidHeight, float fluidHeightX, float fluidHeightY, BlockPos blockPos) {
+    private float fluidCornerHeight(BlockAndTintGetter world, Fluid fluid, float fluidHeight, float fluidHeightX, float fluidHeightY, BlockPos blockPos) {
         if (fluidHeightY >= 1.0f || fluidHeightX >= 1.0f) {
             return 1.0f;
         }
@@ -488,14 +499,14 @@ public class FluidRenderer {
         }
     }
 
-    private float fluidHeight(BlockRenderView world, Fluid fluid, BlockPos blockPos, Direction direction) {
+    private float fluidHeight(BlockAndTintGetter world, Fluid fluid, BlockPos blockPos, Direction direction) {
         BlockState blockState = world.getBlockState(blockPos);
         FluidState fluidState = blockState.getFluidState();
 
-        if (fluid.matchesType(fluidState.getFluid())) {
+        if (fluid.isSame(fluidState.getFluid())) {
             FluidState fluidStateUp = world.getFluidState(blockPos.up());
 
-            if (fluid.matchesType(fluidStateUp.getFluid())) {
+            if (fluid.isSame(fluidStateUp.getFluid())) {
                 return 1.0f;
             } else {
                 return fluidState.getHeight();

@@ -3,13 +3,13 @@ package me.jellysquid.mods.sodium.mixin.features.render.particle;
 import me.jellysquid.mods.sodium.client.render.vertex.VertexConsumerUtils;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ParticleVertex;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
-import net.minecraft.client.particle.BillboardParticle;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.Particle;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Camera;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(BillboardParticle.class)
+@Mixin(SingleQuadParticle.class)
 public abstract class BillboardParticleMixin extends Particle {
     @Shadow
     public abstract float getSize(float tickDelta);
@@ -36,7 +36,7 @@ public abstract class BillboardParticleMixin extends Particle {
     @Shadow
     protected abstract float getMaxV();
 
-    protected BillboardParticleMixin(ClientWorld world, double x, double y, double z) {
+    protected BillboardParticleMixin(ClientLevel world, double x, double y, double z) {
         super(world, x, y, z);
     }
 
@@ -54,30 +54,30 @@ public abstract class BillboardParticleMixin extends Particle {
 
         ci.cancel();
 
-        Vec3d vec3d = camera.getPos();
+        Vec3 vec3d = camera.getPos();
 
-        float x = (float) (MathHelper.lerp(tickDelta, this.prevPosX, this.x) - vec3d.getX());
-        float y = (float) (MathHelper.lerp(tickDelta, this.prevPosY, this.y) - vec3d.getY());
-        float z = (float) (MathHelper.lerp(tickDelta, this.prevPosZ, this.z) - vec3d.getZ());
+        float x = (float) (Mth.lerp(tickDelta, this.prevPosX, this.x) - vec3d.getX());
+        float y = (float) (Mth.lerp(tickDelta, this.prevPosY, this.y) - vec3d.getY());
+        float z = (float) (Mth.lerp(tickDelta, this.prevPosZ, this.z) - vec3d.getZ());
 
         Quaternionf quaternion;
 
         if (this.angle == 0.0F) {
             quaternion = camera.getRotation();
         } else {
-            float angle = MathHelper.lerp(tickDelta, this.prevAngle, this.angle);
+            float angle = Mth.lerp(tickDelta, this.prevAngle, this.angle);
 
             quaternion = new Quaternionf(camera.getRotation());
             quaternion.rotateZ(angle);
         }
 
         float size = this.getSize(tickDelta);
-        int light = this.getBrightness(tickDelta);
+        int light = this.getShade(tickDelta);
 
-        float minU = this.getMinU();
-        float maxU = this.getMaxU();
-        float minV = this.getMinV();
-        float maxV = this.getMaxV();
+        float minU = this.getU0();
+        float maxU = this.getU1();
+        float minV = this.getV0();
+        float maxV = this.getV1();
 
         int color = ColorABGR.pack(this.red , this.green, this.blue, this.alpha);
 

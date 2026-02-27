@@ -1,6 +1,6 @@
 package me.jellysquid.mods.sodium.client.render.immediate.model;
 
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

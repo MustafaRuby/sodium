@@ -1,7 +1,5 @@
 package me.jellysquid.mods.sodium.client.util;
 
-import net.fabricmc.loader.api.FabricLoader;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,13 +14,24 @@ import java.util.function.Function;
  * In Sodium's case, this means waiting for all chunks to be fully updated and ready for rendering before each frame.
  *
  * See https://github.com/grondag/frex/pull/9
+ *
+ * Note: On Forge, the FREX entrypoint system is not available. Third-party mods can interact with this
+ * class directly via reflection or a provided API if needed.
  */
 public class FlawlessFrames {
     private static final Set<Object> ACTIVE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    @SuppressWarnings("unchecked")
     public static void onClientInitialization() {
-        Function<String, Consumer<Boolean>> provider = name -> {
+        // Forge does not have the Fabric entrypoint system for FREX flawless frames.
+        // Third-party mods can call getProvider() to get a consumer for controlling this feature.
+    }
+
+    /**
+     * Returns a provider function that creates per-caller activation tokens.
+     * Third-party mods can use this to control flawless frames mode.
+     */
+    public static Function<String, Consumer<Boolean>> getProvider() {
+        return name -> {
             Object token = new Object();
             return active -> {
                 if (active) {
@@ -32,9 +41,6 @@ public class FlawlessFrames {
                 }
             };
         };
-        FabricLoader.getInstance()
-                .getEntrypoints("frex_flawless_frames", Consumer.class)
-                .forEach(api -> api.accept(provider));
     }
 
     public static boolean isActive() {

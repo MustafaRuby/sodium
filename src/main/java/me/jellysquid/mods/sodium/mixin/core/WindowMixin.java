@@ -3,7 +3,7 @@ package me.jellysquid.mods.sodium.mixin.core;
 import me.jellysquid.mods.sodium.client.SodiumClientMod;
 import net.caffeinemc.mods.sodium.client.compatibility.workarounds.Workarounds;
 import net.caffeinemc.mods.sodium.client.platform.NativeWindowHandle;
-import net.minecraft.client.util.Window;
+import com.mojang.blaze3d.platform.Window;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWNativeWin32;
 import org.spongepowered.asm.mixin.Final;

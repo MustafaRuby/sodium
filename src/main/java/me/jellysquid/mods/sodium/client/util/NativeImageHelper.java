@@ -1,7 +1,7 @@
 package me.jellysquid.mods.sodium.client.util;
 
 import me.jellysquid.mods.sodium.mixin.features.textures.NativeImageAccessor;
-import net.minecraft.client.texture.NativeImage;
+import com.mojang.blaze3d.platform.NativeImage;
 
 import java.util.Locale;
 

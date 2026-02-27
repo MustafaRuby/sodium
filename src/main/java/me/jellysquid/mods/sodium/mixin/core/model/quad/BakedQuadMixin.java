@@ -4,9 +4,9 @@ import me.jellysquid.mods.sodium.client.model.quad.BakedQuadView;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFlags;
 import me.jellysquid.mods.sodium.client.util.ModelQuadUtil;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,7 +25,7 @@ public class BakedQuadMixin implements BakedQuadView {
 
     @Shadow
     @Final
-    protected Sprite sprite;
+    protected TextureAtlasSprite sprite;
 
     @Shadow
     @Final
@@ -49,7 +49,7 @@ public class BakedQuadMixin implements BakedQuadView {
     private ModelQuadFacing normalFace;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void init(int[] vertexData, int colorIndex, Direction face, Sprite sprite, boolean shade, CallbackInfo ci) {
+    private void init(int[] vertexData, int colorIndex, Direction face, TextureAtlasSprite sprite, boolean shade, CallbackInfo ci) {
         this.normal = ModelQuadUtil.calculateNormal(this);
         this.normalFace = ModelQuadUtil.findNormalFace(this.normal);
 
@@ -77,7 +77,7 @@ public class BakedQuadMixin implements BakedQuadView {
     }
 
     @Override
-    public Sprite getSprite() {
+    public TextureAtlasSprite getSprite() {
         return this.sprite;
     }
 

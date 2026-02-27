@@ -5,8 +5,8 @@ import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderTask;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexType;
 import me.jellysquid.mods.sodium.client.util.task.CancellationToken;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.util.Mth;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class ChunkBuilder {
-    static final Logger LOGGER = LogManager.getLogger("ChunkBuilder");
+    static final Logger LOGGER = LogManager.getLogger("ChunkRenderDispatcher");
 
     private final ChunkJobQueue queue = new ChunkJobQueue();
 
@@ -28,7 +28,7 @@ public class ChunkBuilder {
 
     private final ChunkBuildContext localContext;
 
-    public ChunkBuilder(ClientWorld world, ChunkVertexType vertexType) {
+    public ChunkBuilder(ClientLevel world, ChunkVertexType vertexType) {
         int count = getThreadCount();
 
         for (int i = 0; i < count; i++) {
@@ -112,7 +112,7 @@ public class ChunkBuilder {
      * thread.
      */
     private static int getOptimalThreadCount() {
-        return MathHelper.clamp(Math.max(getMaxThreadCount() / 3, getMaxThreadCount() - 6), 1, 10);
+        return Mth.clamp(Math.max(getMaxThreadCount() / 3, getMaxThreadCount() - 6), 1, 10);
     }
 
     private static int getThreadCount() {

@@ -1,7 +1,7 @@
 package me.jellysquid.mods.sodium.client.world.biome;
 
-import net.minecraft.client.color.world.BiomeColors;
-import net.minecraft.world.biome.ColorResolver;
+import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.world.level.ColorResolver;
 
 public enum BiomeColorSource {
     GRASS,

@@ -1,7 +1,7 @@
 package me.jellysquid.mods.sodium.client.model.quad;
 
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 
 import static me.jellysquid.mods.sodium.client.util.ModelQuadUtil.*;
 
@@ -13,7 +13,7 @@ public class ModelQuad implements ModelQuadViewMutable {
     private final int[] data = new int[VERTEX_SIZE * 4];
     private int flags;
 
-    private Sprite sprite;
+    private TextureAtlasSprite sprite;
     private Direction direction;
 
     private int colorIdx;
@@ -59,7 +59,7 @@ public class ModelQuad implements ModelQuadViewMutable {
     }
 
     @Override
-    public void setSprite(Sprite sprite) {
+    public void setSprite(TextureAtlasSprite sprite) {
         this.sprite = sprite;
     }
 
@@ -114,7 +114,7 @@ public class ModelQuad implements ModelQuadViewMutable {
     }
 
     @Override
-    public Sprite getSprite() {
+    public TextureAtlasSprite getSprite() {
         return this.sprite;
     }
 

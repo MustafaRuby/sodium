@@ -1,12 +1,12 @@
 package me.jellysquid.mods.sodium.mixin.debug.checks;
 
 import me.jellysquid.mods.sodium.client.render.util.RenderAsserts;
-import net.minecraft.client.gl.Framebuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(Framebuffer.class)
+@Mixin(RenderTarget.class)
 public class FramebufferMixin {
     @Redirect(method = {
             "resize",

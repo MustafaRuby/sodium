@@ -8,9 +8,9 @@ import me.jellysquid.mods.sodium.client.render.vertex.VertexConsumerUtils;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,12 +48,12 @@ public class ModelPartMixin implements ModelPartData {
     @Shadow
     public boolean hidden;
 
-    @Mutable
+    @MutableBlockPos
     @Shadow
     @Final
-    private List<ModelPart.Cuboid> cuboids;
+    private List<ModelPart.Cube> cuboids;
 
-    @Mutable
+    @MutableBlockPos
     @Shadow
     @Final
     private Map<String, ModelPart> children;
@@ -65,7 +65,7 @@ public class ModelPartMixin implements ModelPartData {
     private ModelCuboid[] sodium$cuboids;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onInit(List<ModelPart.Cuboid> cuboids, Map<String, ModelPart> children, CallbackInfo ci) {
+    private void onInit(List<ModelPart.Cube> cuboids, Map<String, ModelPart> children, CallbackInfo ci) {
         var copies = new ModelCuboid[cuboids.size()];
 
         for (int i = 0; i < cuboids.size(); i++) {
@@ -82,8 +82,8 @@ public class ModelPartMixin implements ModelPartData {
         this.children = Collections.unmodifiableMap(this.children);
     }
 
-    @Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V", at = @At("HEAD"), cancellable = true)
-    private void onRender(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
+    @Inject(method = "render(Lnet/minecraft/client/util/math/PoseStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V", at = @At("HEAD"), cancellable = true)
+    private void onRender(PoseStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
         VertexBufferWriter writer = VertexConsumerUtils.convertOrLog(vertices);
 
         if (writer == null) {
@@ -100,7 +100,7 @@ public class ModelPartMixin implements ModelPartData {
      * @reason Apply transform more quickly
      */
     @Overwrite
-    public void rotate(MatrixStack matrixStack) {
+    public void rotate(PoseStack matrixStack) {
         if (this.pivotX != 0.0F || this.pivotY != 0.0F || this.pivotZ != 0.0F) {
             matrixStack.translate(this.pivotX * (1.0f / 16.0f), this.pivotY * (1.0f / 16.0f), this.pivotZ * (1.0f / 16.0f));
         }

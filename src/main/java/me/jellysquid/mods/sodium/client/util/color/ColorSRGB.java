@@ -1,7 +1,7 @@
 
 package me.jellysquid.mods.sodium.client.util.color;
 
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.util.FastColor;
 
 /**
  * This is a port of the fast-srgb8 library from thomcc on <a href="https://github.com/thomcc/fast-srgb8">GitHub</a>.

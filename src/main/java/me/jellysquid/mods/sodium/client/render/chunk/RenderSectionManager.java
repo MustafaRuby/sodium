@@ -34,15 +34,15 @@ import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import me.jellysquid.mods.sodium.client.world.cloned.ChunkRenderContext;
 import me.jellysquid.mods.sodium.client.world.cloned.ClonedChunkSectionCache;
 import net.caffeinemc.mods.sodium.api.texture.SpriteUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkSection;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +62,7 @@ public class RenderSectionManager {
 
     private final ChunkRenderer chunkRenderer;
 
-    private final ClientWorld world;
+    private final ClientLevel world;
 
     private final ReferenceSet<RenderSection> sectionsWithGlobalEntities = new ReferenceOpenHashSet<>();
 
@@ -82,7 +82,7 @@ public class RenderSectionManager {
 
     private @Nullable BlockPos lastCameraPosition;
 
-    public RenderSectionManager(ClientWorld world, int renderDistance, CommandList commandList) {
+    public RenderSectionManager(ClientLevel world, int renderDistance, CommandList commandList) {
         this.chunkRenderer = new DefaultChunkRenderer(RenderDevice.INSTANCE, ChunkMeshFormats.COMPACT);
 
         this.world = world;
@@ -148,7 +148,7 @@ public class RenderSectionManager {
         {
             useOcclusionCulling = false;
         } else {
-            useOcclusionCulling = MinecraftClient.getInstance().chunkCullingEnabled;
+            useOcclusionCulling = Minecraft.getInstance().chunkCullingEnabled;
         }
         return useOcclusionCulling;
     }
@@ -162,7 +162,7 @@ public class RenderSectionManager {
     }
 
     public void onSectionAdded(int x, int y, int z) {
-        long key = ChunkSectionPos.asLong(x, y, z);
+        long key = SectionPos.asLong(x, y, z);
 
         if (this.sectionByPosition.containsKey(key)) {
             return;
@@ -176,7 +176,7 @@ public class RenderSectionManager {
         this.sectionByPosition.put(key, renderSection);
 
         Chunk chunk = this.world.getChunk(x, z);
-        ChunkSection section = chunk.getSectionArray()[this.world.sectionCoordToIndex(y)];
+        LevelChunkSection section = chunk.getSections()[this.world.getSectionIndexFromSectionY(y)];
 
         if (section.isEmpty()) {
             this.updateSectionInfo(renderSection, BuiltSectionInfo.EMPTY);
@@ -190,7 +190,7 @@ public class RenderSectionManager {
     }
 
     public void onSectionRemoved(int x, int y, int z) {
-        RenderSection section = this.sectionByPosition.remove(ChunkSectionPos.asLong(x, y, z));
+        RenderSection section = this.sectionByPosition.remove(SectionPos.asLong(x, y, z));
 
         if (section == null) {
             return;
@@ -245,7 +245,7 @@ public class RenderSectionManager {
                     continue;
                 }
 
-                for (Sprite sprite : sprites) {
+                for (TextureAtlasSprite sprite : sprites) {
                     SpriteUtil.INSTANCE.markSpriteActive(sprite);
                 }
             }
@@ -439,7 +439,7 @@ public class RenderSectionManager {
 
         this.sectionCache.invalidate(x, y, z);
 
-        RenderSection section = this.sectionByPosition.get(ChunkSectionPos.asLong(x, y, z));
+        RenderSection section = this.sectionByPosition.get(SectionPos.asLong(x, y, z));
 
         if (section != null && section.isBuilt()) {
             ChunkUpdateType pendingUpdate;
@@ -458,7 +458,7 @@ public class RenderSectionManager {
         }
     }
 
-    private static final float NEARBY_REBUILD_DISTANCE = MathHelper.square(16.0f);
+    private static final float NEARBY_REBUILD_DISTANCE = Mth.square(16.0f);
 
     private boolean shouldPrioritizeRebuild(RenderSection section) {
         return this.lastCameraPosition != null && section.getSquaredDistance(this.lastCameraPosition) < NEARBY_REBUILD_DISTANCE;
@@ -475,7 +475,7 @@ public class RenderSectionManager {
         var renderDistance = this.getRenderDistance();
 
         // The fog must be fully opaque in order to skip rendering of chunks behind it
-        if (!MathHelper.approximatelyEquals(color[3], 1.0f)) {
+        if (!Mth.approximatelyEquals(color[3], 1.0f)) {
             return renderDistance;
         }
 
@@ -511,7 +511,7 @@ public class RenderSectionManager {
     }
 
     private RenderSection getRenderSection(int x, int y, int z) {
-        return this.sectionByPosition.get(ChunkSectionPos.asLong(x, y, z));
+        return this.sectionByPosition.get(SectionPos.asLong(x, y, z));
     }
 
     public Collection<String> getDebugStrings() {

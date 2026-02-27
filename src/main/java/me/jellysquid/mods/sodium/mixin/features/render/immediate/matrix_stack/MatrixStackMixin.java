@@ -1,6 +1,6 @@
 package me.jellysquid.mods.sodium.mixin.features.render.immediate.matrix_stack;
 
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.*;
@@ -8,14 +8,14 @@ import org.spongepowered.asm.mixin.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-@Mixin(MatrixStack.class)
+@Mixin(PoseStack.class)
 public abstract class MatrixStackMixin {
     @Shadow
     @Final
-    private Deque<MatrixStack.Entry> stack;
+    private Deque<PoseStack.Entry> stack;
 
     @Unique
-    private final Deque<MatrixStack.Entry> cache = new ArrayDeque<>();
+    private final Deque<PoseStack.Entry> cache = new ArrayDeque<>();
 
 
     /**
@@ -26,7 +26,7 @@ public abstract class MatrixStackMixin {
     public void push() {
         var prev = this.stack.getLast();
 
-        MatrixStack.Entry entry;
+        PoseStack.Entry entry;
 
         if (!this.cache.isEmpty()) {
             entry = this.cache.removeLast();
@@ -35,7 +35,7 @@ public abstract class MatrixStackMixin {
             entry.getNormalMatrix()
                     .set(prev.getNormalMatrix());
         } else {
-            entry = new MatrixStack.Entry(new Matrix4f(prev.getPositionMatrix()), new Matrix3f(prev.getNormalMatrix()));
+            entry = new PoseStack.Entry(new Matrix4f(prev.getPositionMatrix()), new Matrix3f(prev.getNormalMatrix()));
         }
 
         this.stack.addLast(entry);

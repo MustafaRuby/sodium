@@ -1,9 +1,9 @@
 
 package me.jellysquid.mods.sodium.mixin.features.render.immediate.buffer_builder.sorting;
 
-import com.mojang.blaze3d.systems.VertexSorter;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexSorting;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
@@ -37,7 +37,7 @@ public abstract class BufferBuilderMixin {
 
     @Shadow
     @Nullable
-    private VertexSorter sorter;
+    private VertexSorting sorter;
 
     /**
      * @author JellySquid

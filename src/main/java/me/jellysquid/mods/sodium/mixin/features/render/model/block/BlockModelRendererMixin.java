@@ -7,16 +7,16 @@ import me.jellysquid.mods.sodium.client.util.DirectionUtil;
 import net.caffeinemc.mods.sodium.api.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.block.BlockModelRenderer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.random.LocalRandom;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.world.level.block.state.BlockState;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,17 +25,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(BlockModelRenderer.class)
+@Mixin(ModelBlockRenderer.class)
 public class BlockModelRendererMixin {
     @Unique
-    private final Random random = new LocalRandom(42L);
+    private final RandomSource random = new LocalRandom(42L);
 
     /**
      * @reason Use optimized vertex writer intrinsics, avoid allocations
      * @author JellySquid
      */
-    @Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack$Entry;Lnet/minecraft/client/render/VertexConsumer;Lnet/minecraft/block/BlockState;Lnet/minecraft/client/render/model/BakedModel;FFFII)V", at = @At("HEAD"), cancellable = true)
-    private void renderFast(MatrixStack.Entry entry, VertexConsumer vertexConsumer, BlockState blockState, BakedModel bakedModel, float red, float green, float blue, int light, int overlay, CallbackInfo ci) {
+    @Inject(method = "render(Lnet/minecraft/client/util/math/PoseStack$Entry;Lnet/minecraft/client/render/VertexConsumer;Lnet/minecraft/block/BlockState;Lnet/minecraft/client/render/model/BakedModel;FFFII)V", at = @At("HEAD"), cancellable = true)
+    private void renderFast(PoseStack.Entry entry, VertexConsumer vertexConsumer, BlockState blockState, BakedModel bakedModel, float red, float green, float blue, int light, int overlay, CallbackInfo ci) {
         var writer = VertexConsumerUtils.convertOrLog(vertexConsumer);
         if(writer == null) {
             return;
@@ -43,12 +43,12 @@ public class BlockModelRendererMixin {
 
         ci.cancel();
 
-        Random random = this.random;
+        RandomSource random = this.random;
 
         // Clamp color ranges
-        red = MathHelper.clamp(red, 0.0F, 1.0F);
-        green = MathHelper.clamp(green, 0.0F, 1.0F);
-        blue = MathHelper.clamp(blue, 0.0F, 1.0F);
+        red = Mth.clamp(red, 0.0F, 1.0F);
+        green = Mth.clamp(green, 0.0F, 1.0F);
+        blue = Mth.clamp(blue, 0.0F, 1.0F);
 
         int defaultColor = ColorABGR.pack(red, green, blue, 1.0F);
 
@@ -71,7 +71,7 @@ public class BlockModelRendererMixin {
 
     @Unique
     @SuppressWarnings("ForLoopReplaceableByForEach")
-    private static void renderQuads(MatrixStack.Entry matrices, VertexBufferWriter writer, int defaultColor, List<BakedQuad> quads, int light, int overlay) {
+    private static void renderQuads(PoseStack.Entry matrices, VertexBufferWriter writer, int defaultColor, List<BakedQuad> quads, int light, int overlay) {
         for (int i = 0; i < quads.size(); i++) {
             BakedQuad bakedQuad = quads.get(i);
 

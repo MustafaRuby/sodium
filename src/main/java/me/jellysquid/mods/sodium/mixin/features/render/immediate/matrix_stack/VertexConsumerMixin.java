@@ -1,9 +1,9 @@
 package me.jellysquid.mods.sodium.mixin.features.render.immediate.matrix_stack;
 
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
-import net.minecraft.client.render.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Math;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;

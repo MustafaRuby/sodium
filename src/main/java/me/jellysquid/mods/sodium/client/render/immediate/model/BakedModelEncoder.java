@@ -6,13 +6,13 @@ import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.util.ColorU8;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 
 public class BakedModelEncoder {
-    public static void writeQuadVertices(VertexBufferWriter writer, MatrixStack.Entry matrices, ModelQuadView quad, int color, int light, int overlay) {
+    public static void writeQuadVertices(VertexBufferWriter writer, PoseStack.Entry matrices, ModelQuadView quad, int color, int light, int overlay) {
         Matrix3f matNormal = matrices.getNormalMatrix();
         Matrix4f matPosition = matrices.getPositionMatrix();
 
@@ -42,7 +42,7 @@ public class BakedModelEncoder {
         }
     }
 
-    public static void writeQuadVertices(VertexBufferWriter writer, MatrixStack.Entry matrices, ModelQuadView quad, float r, float g, float b, float a, float[] brightnessTable, boolean colorize, int[] light, int overlay) {
+    public static void writeQuadVertices(VertexBufferWriter writer, PoseStack.Entry matrices, ModelQuadView quad, float r, float g, float b, float a, float[] brightnessTable, boolean colorize, int[] light, int overlay) {
         Matrix3f matNormal = matrices.getNormalMatrix();
         Matrix4f matPosition = matrices.getPositionMatrix();
 

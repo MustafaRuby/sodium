@@ -1,7 +1,7 @@
 package me.jellysquid.mods.sodium.client.render.chunk.map;
 
 import it.unimi.dsi.fastutil.longs.*;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.level.ChunkPos;
 
 public class ChunkTracker implements ClientChunkEventListener {
     private final Long2IntOpenHashMap chunkStatus = new Long2IntOpenHashMap();

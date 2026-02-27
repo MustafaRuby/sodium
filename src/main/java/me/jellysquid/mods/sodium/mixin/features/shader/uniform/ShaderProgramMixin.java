@@ -2,10 +2,10 @@ package me.jellysquid.mods.sodium.mixin.features.shader.uniform;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.resource.ResourceFactory;
+import com.mojang.blaze3d.shaders.Uniform;
+import net.minecraft.client.renderer.ShaderInstance;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,7 +22,7 @@ import java.util.List;
  * to happen when glGetUniformLocation and glGetInteger are called. In our case, this is rather unnecessary, since
  * these uniform locations can be trivially cached.
  */
-@Mixin(ShaderProgram.class)
+@Mixin(ShaderInstance.class)
 public class ShaderProgramMixin {
     @Shadow
     @Final
@@ -36,7 +36,7 @@ public class ShaderProgramMixin {
     private Object2IntMap<String> uniformCache;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void initCache(ResourceFactory factory, String name, VertexFormat format, CallbackInfo ci) {
+    private void initCache(ResourceProvider factory, String name, VertexFormat format, CallbackInfo ci) {
         this.uniformCache = new Object2IntOpenHashMap<>();
         this.uniformCache.defaultReturnValue(-1);
 

@@ -1,12 +1,16 @@
-rootProject.name = "sodium"
-
 pluginManagement {
     repositories {
-        maven("https://maven.fabricmc.net/") {
-            name = "Fabric"
+        maven {
+            name = "Forge"
+            url = uri("https://maven.minecraftforge.net/")
         }
-
+        maven {
+            name = "Sponge"
+            url = uri("https://repo.spongepowered.org/maven/")
+        }
         mavenCentral()
         gradlePluginPortal()
     }
 }
+
+rootProject.name = "sodium-forge"

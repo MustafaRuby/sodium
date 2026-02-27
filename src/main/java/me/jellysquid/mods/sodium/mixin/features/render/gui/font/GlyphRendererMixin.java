@@ -5,8 +5,8 @@ import net.caffeinemc.mods.sodium.api.vertex.format.common.GlyphVertex;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
-import net.minecraft.client.font.GlyphRenderer;
-import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.gui.font.glyphs.BakedGlyph;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.*;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(GlyphRenderer.class)
+@Mixin(BakedGlyph.class)
 public class GlyphRendererMixin {
     @Shadow
     @Final

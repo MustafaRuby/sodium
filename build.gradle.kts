@@ -1,158 +1,81 @@
-object Constants {
-    // https://fabricmc.net/develop/
-    const val MINECRAFT_VERSION: String = "1.20.1"
-    const val YARN_VERSION: String = "1.20.1+build.10"
-    const val FABRIC_LOADER_VERSION: String = "0.16.10"
-    const val FABRIC_API_VERSION: String = "0.92.3+1.20.1"
-
-    // https://semver.org/
-    const val MOD_VERSION: String = "0.5.13"
-}
-
 plugins {
-    // Unlike most projects, we choose to pin the specific version of Loom.
-    // This prevents a lot of issues where the build script can fail randomly because the Fabric Maven server
-    // is not reachable for some reason, and it makes builds much more reproducible. Observation also shows that it
-    // really helps to improve startup times on slow connections.
-    id("fabric-loom") version "1.9.2"
+    id("java")
+    id("net.minecraftforge.gradle") version "6.0.+"
+    id("org.spongepowered.mixin") version "0.7.+"
 }
 
-base {
-    archivesName = "sodium-fabric"
-
-    group = "me.jellysquid.mods"
-    version = createVersionString()
-}
-
-loom {
-    mixin {
-        defaultRefmapName = "sodium.refmap.json"
-        useLegacyMixinAp = false
-    }
-
-    accessWidenerPath = file("src/main/resources/sodium.accesswidener")
-}
+group = "me.jellysquid.mods"
+version = "0.5.13-forge"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
 
-sourceSets {
-    val main = getByName("main")
-    val api = create("api")
-    val desktop = create("desktop")
-    val workarounds = create("workarounds")
+minecraft {
+    mappings("official", "1.20.1")
 
-    api.apply {
-        java {
-            compileClasspath += main.compileClasspath
+    accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
+
+    runs {
+        create("client") {
+            workingDirectory(project.file("run"))
+
+            property("forge.logging.markers", "REGISTRIES")
+            property("forge.logging.console.level", "debug")
+
+            arg("--mixin.config=sodium.mixins.json")
+
+            mods {
+                create("sodium") {
+                    source(sourceSets.main.get())
+                }
+            }
         }
     }
+}
 
-    workarounds.apply {
-        java {
-            compileClasspath += main.compileClasspath
-        }
-    }
+mixin {
+    add(sourceSets.main.get(), "sodium.refmap.json")
+    config("sodium.mixins.json")
+}
 
-    desktop.apply {
-        java {
-            srcDir("src/desktop/java")
-        }
+repositories {
+    maven {
+        name = "Sponge"
+        url = uri("https://repo.spongepowered.org/maven/")
     }
-
-    main.apply {
-        java {
-            compileClasspath += api.output
-            compileClasspath += workarounds.output
-            runtimeClasspath += api.output
-            runtimeClasspath += workarounds.output
-        }
-    }
+    mavenCentral()
 }
 
 dependencies {
-    minecraft(group = "com.mojang", name = "minecraft", version = Constants.MINECRAFT_VERSION)
-    mappings(group = "net.fabricmc", name = "yarn", version = Constants.YARN_VERSION, classifier = "v2")
-    modImplementation(group = "net.fabricmc", name = "fabric-loader", version = Constants.FABRIC_LOADER_VERSION)
+    minecraft("net.minecraftforge:forge:1.20.1-47.4.10")
 
-    fun addEmbeddedFabricModule(name: String) {
-        val module = fabricApi.module(name, Constants.FABRIC_API_VERSION)
-        modImplementation(module)
-        include(module)
-    }
-
-    // Fabric API modules
-    addEmbeddedFabricModule("fabric-api-base")
-    addEmbeddedFabricModule("fabric-block-view-api-v2")
-    addEmbeddedFabricModule("fabric-rendering-fluids-v1")
-    addEmbeddedFabricModule("fabric-rendering-data-attachment-v1")
-    addEmbeddedFabricModule("fabric-resource-loader-v0")
+    annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
 }
 
-tasks {
-    getByName<JavaCompile>("compileDesktopJava") {
-        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-        targetCompatibility = JavaVersion.VERSION_1_8.toString()
-    }
-
-    jar {
-        from("${rootProject.projectDir}/LICENSE.md")
-
-        val api = sourceSets.getByName("api")
-        from(api.output.classesDirs)
-        from(api.output.resourcesDir)
-
-        val desktop = sourceSets.getByName("desktop")
-        from(desktop.output.classesDirs)
-        from(desktop.output.resourcesDir)
-
-        val workarounds = sourceSets.getByName("workarounds")
-        from(workarounds.output.classesDirs)
-        from(workarounds.output.resourcesDir)
-
-        manifest.attributes["Main-Class"] = "net.caffeinemc.mods.sodium.desktop.LaunchWarn"
-    }
-
-    processResources {
-        inputs.property("version", project.version)
-
-        filesMatching("fabric.mod.json") {
-            expand(mapOf("version" to project.version))
+// Merge former api and workarounds source sets into main
+sourceSets {
+    main {
+        java {
+            srcDirs("src/main/java", "src/api/java", "src/workarounds/java")
+        }
+        resources {
+            srcDirs("src/main/resources")
         }
     }
 }
 
-// ensure that the encoding is set to UTF-8, no matter what the system default is
-// this fixes some edge cases with special characters not displaying correctly
-// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
+    options.release.set(17)
 }
 
-fun createVersionString(): String {
-    val builder = StringBuilder()
-
-    val isReleaseBuild = project.hasProperty("build.release")
-    val buildId = System.getenv("GITHUB_RUN_NUMBER")
-
-    if (isReleaseBuild) {
-        builder.append(Constants.MOD_VERSION)
-    } else {
-        builder.append(Constants.MOD_VERSION.substringBefore('-'))
-        builder.append("-snapshot")
+tasks.jar {
+    manifest {
+        attributes(
+            "MixinConfigs" to "sodium.mixins.json"
+        )
     }
 
-    builder.append("+mc").append(Constants.MINECRAFT_VERSION)
-
-    if (!isReleaseBuild) {
-        if (buildId != null) {
-            builder.append("-build.${buildId}")
-        } else {
-            builder.append("-local")
-        }
-    }
-
-    return builder.toString()
+    from("${rootProject.projectDir}/LICENSE.md")
 }

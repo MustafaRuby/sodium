@@ -1,15 +1,15 @@
 package net.caffeinemc.mods.sodium.api.vertex.attributes;
 
-import net.minecraft.client.render.VertexFormatElement;
-import net.minecraft.client.render.VertexFormats;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public enum CommonVertexAttribute {
-    POSITION(VertexFormats.POSITION_ELEMENT),
-    COLOR(VertexFormats.COLOR_ELEMENT),
-    TEXTURE(VertexFormats.TEXTURE_ELEMENT),
-    OVERLAY(VertexFormats.OVERLAY_ELEMENT),
-    LIGHT(VertexFormats.LIGHT_ELEMENT),
-    NORMAL(VertexFormats.NORMAL_ELEMENT);
+    POSITION(DefaultVertexFormat.POSITION_ELEMENT),
+    COLOR(DefaultVertexFormat.COLOR_ELEMENT),
+    TEXTURE(DefaultVertexFormat.TEXTURE_ELEMENT),
+    OVERLAY(DefaultVertexFormat.OVERLAY_ELEMENT),
+    LIGHT(DefaultVertexFormat.LIGHT_ELEMENT),
+    NORMAL(DefaultVertexFormat.NORMAL_ELEMENT);
 
     private final VertexFormatElement element;
 

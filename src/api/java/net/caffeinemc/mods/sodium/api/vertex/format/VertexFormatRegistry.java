@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.sodium.api.vertex.format;
 
 import net.caffeinemc.mods.sodium.api.internal.DependencyInjection;
-import net.minecraft.client.render.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
 public interface VertexFormatRegistry {
     VertexFormatRegistry INSTANCE = DependencyInjection.load(VertexFormatRegistry.class,

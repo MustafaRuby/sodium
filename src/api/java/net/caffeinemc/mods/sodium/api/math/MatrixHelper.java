@@ -1,8 +1,8 @@
 package net.caffeinemc.mods.sodium.api.math;
 
 import net.caffeinemc.mods.sodium.api.util.NormI8;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Direction;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.Direction;
 import org.joml.Math;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -121,7 +121,7 @@ public class MatrixHelper {
      * @param angleY The angle to rotate by on the Y-axis
      * @param angleX The angle to rotate by on the X-axis
      */
-    public static void rotateZYX(MatrixStack.Entry matrices, float angleZ, float angleY, float angleX) {
+    public static void rotateZYX(PoseStack.Entry matrices, float angleZ, float angleY, float angleX) {
         matrices.getPositionMatrix()
                 .rotateZYX(angleZ, angleY, angleX);
 

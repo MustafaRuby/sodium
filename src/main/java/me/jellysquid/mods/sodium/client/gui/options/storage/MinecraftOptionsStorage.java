@@ -1,18 +1,18 @@
 package me.jellysquid.mods.sodium.client.gui.options.storage;
 
 import me.jellysquid.mods.sodium.client.SodiumClientMod;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 
-public class MinecraftOptionsStorage implements OptionStorage<GameOptions> {
-    private final MinecraftClient client;
+public class MinecraftOptionsStorage implements OptionStorage<Options> {
+    private final Minecraft client;
 
     public MinecraftOptionsStorage() {
-        this.client = MinecraftClient.getInstance();
+        this.client = Minecraft.getInstance();
     }
 
     @Override
-    public GameOptions getData() {
+    public Options getData() {
         return this.client.options;
     }
 

@@ -2,8 +2,8 @@ package me.jellysquid.mods.sodium.mixin.features.render.entity;
 
 import me.jellysquid.mods.sodium.client.model.ModelCuboidAccessor;
 import me.jellysquid.mods.sodium.client.render.immediate.model.ModelCuboid;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.core.Direction;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Set;
 
-@Mixin(ModelPart.Cuboid.class)
+@Mixin(ModelPart.Cube.class)
 public class CuboidMixin implements ModelCuboidAccessor {
     @Unique
     private ModelCuboid sodium$cuboid;

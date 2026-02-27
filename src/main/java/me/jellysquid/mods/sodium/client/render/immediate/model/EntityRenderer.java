@@ -3,9 +3,9 @@ package me.jellysquid.mods.sodium.client.render.immediate.model;
 import net.caffeinemc.mods.sodium.api.math.MatrixHelper;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ModelVertex;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.model.geom.ModelPart;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.core.Direction;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -73,7 +73,7 @@ public class EntityRenderer {
         }
     }
 
-    public static void render(MatrixStack matrixStack, VertexBufferWriter writer, ModelPart part, int light, int overlay, int color) {
+    public static void render(PoseStack matrixStack, VertexBufferWriter writer, ModelPart part, int light, int overlay, int color) {
         ModelPartData accessor = ModelPartData.from(part);
 
         if (!accessor.isVisible()) {
@@ -100,19 +100,19 @@ public class EntityRenderer {
         matrixStack.pop();
     }
 
-    private static void renderChildren(MatrixStack matrices, VertexBufferWriter writer, int light, int overlay, int color, ModelPart[] children) {
+    private static void renderChildren(PoseStack matrices, VertexBufferWriter writer, int light, int overlay, int color, ModelPart[] children) {
         for (ModelPart part : children) {
             render(matrices, writer, part, light, overlay, color);
         }
     }
 
-    public static void renderCuboids(MatrixStack.Entry matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {
+    public static void renderCuboids(PoseStack.Entry matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {
         for (var cuboid : cuboids) {
             renderCuboid(matrices, writer, cuboid, light, overlay, color);
         }
     }
 
-    public static void renderCuboid(MatrixStack.Entry matrices, VertexBufferWriter writer, ModelCuboid cuboid, int light, int overlay, int color) {
+    public static void renderCuboid(PoseStack.Entry matrices, VertexBufferWriter writer, ModelCuboid cuboid, int light, int overlay, int color) {
         prepareNormalsIfChanged(matrices);
         prepareVertices(matrices, cuboid);
 
@@ -162,7 +162,7 @@ public class EntityRenderer {
         ModelVertex.write(ptr, pos.x, pos.y, pos.z, color, tex.x, tex.y, overlay, light, normal);
     }
 
-    private static void prepareVertices(MatrixStack.Entry matrices, ModelCuboid cuboid) {
+    private static void prepareVertices(PoseStack.Entry matrices, ModelCuboid cuboid) {
         buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y1_Z1], cuboid.x1, cuboid.y1, cuboid.z1, matrices.getPositionMatrix());
         buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y1_Z1], cuboid.x2, cuboid.y1, cuboid.z1, matrices.getPositionMatrix());
         buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y2_Z1], cuboid.x2, cuboid.y2, cuboid.z1, matrices.getPositionMatrix());
@@ -180,7 +180,7 @@ public class EntityRenderer {
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u0, cuboid.v1, cuboid.u1, cuboid.v2);
     }
 
-    public static void prepareNormalsIfChanged(MatrixStack.Entry matrices) {
+    public static void prepareNormalsIfChanged(PoseStack.Entry matrices) {
         if (!matrices.getNormalMatrix().equals(lastNormalMatrix)) {
             lastNormalMatrix.set(matrices.getNormalMatrix());
 

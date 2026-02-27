@@ -7,14 +7,14 @@ import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderMatrices;
 import me.jellysquid.mods.sodium.client.render.viewport.ViewportProvider;
 import me.jellysquid.mods.sodium.client.util.FlawlessFrames;
 import me.jellysquid.mods.sodium.client.world.WorldRendererExtended;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.*;
@@ -25,19 +25,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.SortedSet;
 
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public abstract class WorldRendererMixin implements WorldRendererExtended {
     @Shadow
     @Final
-    private BufferBuilderStorage bufferBuilders;
+    private RenderBuffers bufferBuilders;
 
     @Shadow
     @Final
-    private Long2ObjectMap<SortedSet<BlockBreakingInfo>> blockBreakingProgressions;
+    private Long2ObjectMap<SortedSet<BlockDestructionProgress>> blockBreakingProgressions;
 
     @Shadow
     @Nullable
-    private ClientWorld world;
+    private ClientLevel world;
     @Unique
     private SodiumWorldRenderer renderer;
 
@@ -45,23 +45,23 @@ public abstract class WorldRendererMixin implements WorldRendererExtended {
     private int frame;
 
     @Override
-    public SodiumWorldRenderer sodium$getWorldRenderer() {
+    public SodiumWorldRenderer sodium$getLevelRenderer() {
         return this.renderer;
     }
 
-    @Redirect(method = "reload()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/option/GameOptions;getClampedViewDistance()I", ordinal = 1))
-    private int nullifyBuiltChunkStorage(GameOptions options) {
+    @Redirect(method = "reload()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/option/Options;getClampedViewDistance()I", ordinal = 1))
+    private int nullifyBuiltChunkStorage(Options options) {
         // Do not allow any resources to be allocated
         return 0;
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void init(MinecraftClient client, EntityRenderDispatcher entityRenderDispatcher, BlockEntityRenderDispatcher blockEntityRenderDispatcher, BufferBuilderStorage bufferBuilderStorage, CallbackInfo ci) {
+    private void init(Minecraft client, EntityRenderDispatcher entityRenderDispatcher, BlockEntityRenderDispatcher blockEntityRenderDispatcher, RenderBuffers bufferBuilderStorage, CallbackInfo ci) {
         this.renderer = new SodiumWorldRenderer(client);
     }
 
     @Inject(method = "setWorld", at = @At("RETURN"))
-    private void onWorldChanged(ClientWorld world, CallbackInfo ci) {
+    private void onWorldChanged(ClientLevel world, CallbackInfo ci) {
         RenderDevice.enterManagedCode();
 
         try {
@@ -99,7 +99,7 @@ public abstract class WorldRendererMixin implements WorldRendererExtended {
      * @author JellySquid
      */
     @Overwrite
-    private void renderLayer(RenderLayer renderLayer, MatrixStack matrices, double x, double y, double z, Matrix4f projection) {
+    private void renderLayer(RenderType renderLayer, PoseStack matrices, double x, double y, double z, Matrix4f projection) {
         RenderDevice.enterManagedCode();
 
         try {
@@ -184,8 +184,8 @@ public abstract class WorldRendererMixin implements WorldRendererExtended {
         }
     }
 
-    @Inject(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/WorldRenderer;noCullingBlockEntities:Ljava/util/Set;", shift = At.Shift.BEFORE, ordinal = 0))
-    private void onRenderBlockEntities(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci) {
+    @Inject(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/LevelRenderer;noCullingBlockEntities:Ljava/util/Set;", shift = At.Shift.BEFORE, ordinal = 0))
+    private void onRenderBlockEntities(PoseStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f positionMatrix, CallbackInfo ci) {
         this.renderer.renderBlockEntities(matrices, this.bufferBuilders, this.blockBreakingProgressions, camera, tickDelta);
     }
 

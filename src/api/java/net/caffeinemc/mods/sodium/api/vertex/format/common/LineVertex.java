@@ -5,11 +5,11 @@ import net.caffeinemc.mods.sodium.api.vertex.attributes.common.NormalAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.PositionAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.format.VertexFormatDescription;
 import net.caffeinemc.mods.sodium.api.vertex.format.VertexFormatRegistry;
-import net.minecraft.client.render.VertexFormats;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public final class LineVertex  {
     public static final VertexFormatDescription FORMAT = VertexFormatRegistry.instance()
-            .get(VertexFormats.LINES);
+            .get(DefaultVertexFormat.LINES);
 
     public static final int STRIDE = 20;
 

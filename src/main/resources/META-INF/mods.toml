@@ -1,0 +1,29 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "Polyform-Shield-1.0.0"
+
+[[mods]]
+modId = "sodium"
+version = "0.5.13"
+displayName = "Sodium (Forge Port)"
+description = '''
+Sodium is a powerful rendering engine replacement for Minecraft which greatly
+improves frame rates and micro-stutter, while fixing many graphical issues.
+'''
+authors = "JellySquid, CaffeineMC"
+logoFile = "assets/sodium/icon.png"
+displayURL = "https://github.com/CaffeineMC/sodium"
+
+[[dependencies.sodium]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.sodium]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1,1.20.2)"
+ordering = "NONE"
+side = "CLIENT"

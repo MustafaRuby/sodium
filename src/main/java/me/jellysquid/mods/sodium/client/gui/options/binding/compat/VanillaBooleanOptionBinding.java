@@ -1,23 +1,23 @@
 package me.jellysquid.mods.sodium.client.gui.options.binding.compat;
 
 import me.jellysquid.mods.sodium.client.gui.options.binding.OptionBinding;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.option.SimpleOption;
+import net.minecraft.client.Options;
+import net.minecraft.client.OptionInstance;
 
-public class VanillaBooleanOptionBinding implements OptionBinding<GameOptions, Boolean> {
-    private final SimpleOption<Boolean> option;
+public class VanillaBooleanOptionBinding implements OptionBinding<Options, Boolean> {
+    private final OptionInstance<Boolean> option;
 
-    public VanillaBooleanOptionBinding(SimpleOption<Boolean> option) {
+    public VanillaBooleanOptionBinding(OptionInstance<Boolean> option) {
         this.option = option;
     }
 
     @Override
-    public void setValue(GameOptions storage, Boolean value) {
+    public void setValue(Options storage, Boolean value) {
         this.option.setValue(value);
     }
 
     @Override
-    public Boolean getValue(GameOptions storage) {
+    public Boolean getValue(Options storage) {
         return this.option.getValue();
     }
 }

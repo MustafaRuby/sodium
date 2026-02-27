@@ -1,12 +1,12 @@
 package me.jellysquid.mods.sodium.mixin.features.model;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.MultipartBakedModel;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.MultiPartBakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.*;
 
@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Predicate;
 
-@Mixin(MultipartBakedModel.class)
+@Mixin(MultiPartBakedModel.class)
 public class MultipartBakedModelMixin {
     @Unique
     private final Map<BlockState, BakedModel[]> stateCacheFast = new Reference2ReferenceOpenHashMap<>();
@@ -30,7 +30,7 @@ public class MultipartBakedModelMixin {
      * @reason Avoid expensive allocations and replace bitfield indirection
      */
     @Overwrite
-    public List<BakedQuad> getQuads(BlockState state, Direction face, Random random) {
+    public List<BakedQuad> getQuads(BlockState state, Direction face, RandomSource random) {
         if (state == null) {
             return Collections.emptyList();
         }

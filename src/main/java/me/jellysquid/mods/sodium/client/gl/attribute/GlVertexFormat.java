@@ -75,11 +75,11 @@ public class GlVertexFormat<T extends Enum<T>> {
          */
         private Builder<T> addElement(T type, GlVertexAttribute attribute) {
             if (attribute.getPointer() >= this.stride) {
-                throw new IllegalArgumentException("Element starts outside vertex format");
+                throw new IllegalArgumentException("GuiEventListener starts outside vertex format");
             }
 
             if (attribute.getPointer() + attribute.getSize() > this.stride) {
-                throw new IllegalArgumentException("Element extends outside vertex format");
+                throw new IllegalArgumentException("GuiEventListener extends outside vertex format");
             }
 
             if (this.attributes.put(type, attribute) != null) {

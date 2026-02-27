@@ -2,7 +2,7 @@ package me.jellysquid.mods.sodium.mixin.debug.checks;
 
 import me.jellysquid.mods.sodium.client.render.util.DeferredRenderTask;
 import me.jellysquid.mods.sodium.client.render.util.RenderAsserts;
-import net.minecraft.client.texture.TextureManager;
+import net.minecraft.client.renderer.texture.TextureManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;

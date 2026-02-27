@@ -9,15 +9,15 @@ package me.jellysquid.mods.sodium.mixin.features.textures.mipmaps;
 
 import me.jellysquid.mods.sodium.client.util.NativeImageHelper;
 import me.jellysquid.mods.sodium.client.util.color.ColorSRGB;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.SpriteContents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import org.lwjgl.system.MemoryUtil;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.MutableBlockPos;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(SpriteContents.class)
 public class SpriteContentsMixin {
-    @Mutable
+    @MutableBlockPos
     @Shadow
     @Final
     private NativeImage image;
@@ -39,7 +39,7 @@ public class SpriteContentsMixin {
     // can remain minimal. Being less dependent on specific details of Fabric is good, since it means we can be more
     // cross-platform.
     @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/texture/SpriteContents;image:Lnet/minecraft/client/texture/NativeImage;", opcode = Opcodes.PUTFIELD))
-    private void sodium$beforeGenerateMipLevels(SpriteContents instance, NativeImage nativeImage, Identifier identifier) {
+    private void sodium$beforeGenerateMipLevels(SpriteContents instance, NativeImage nativeImage, ResourceLocation identifier) {
         // We're injecting after the "info" field has been set, so this is safe even though we're in a constructor.
         sodium$fillInTransparentPixelColors(nativeImage);
 
@@ -57,7 +57,7 @@ public class SpriteContentsMixin {
     @Unique
     private static void sodium$fillInTransparentPixelColors(NativeImage nativeImage) {
         final long ppPixel = NativeImageHelper.getPointerRGBA(nativeImage);
-        final int pixelCount = nativeImage.getHeight() * nativeImage.getWidth();
+        final int pixelCount = nativeImage.getHeight() * nativeImage.width();
 
         // Calculate an average color from all pixels that are not completely transparent.
         // This average is weighted based on the (non-zero) alpha value of the pixel.

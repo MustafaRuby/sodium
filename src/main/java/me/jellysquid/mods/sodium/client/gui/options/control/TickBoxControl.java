@@ -2,10 +2,10 @@ package me.jellysquid.mods.sodium.client.gui.options.control;
 
 import me.jellysquid.mods.sodium.client.gui.options.Option;
 import me.jellysquid.mods.sodium.client.util.Dim2i;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.input.KeyCodes;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.math.Rect2i;
+import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.renderer.Rect2i;
 
 public class TickBoxControl implements Control<Boolean> {
     private final Option<Boolean> option;
@@ -39,12 +39,12 @@ public class TickBoxControl implements Control<Boolean> {
         }
 
         @Override
-        public void render(DrawContext drawContext, int mouseX, int mouseY, float delta) {
+        public void render(GuiGraphics drawContext, int mouseX, int mouseY, float delta) {
             super.render(drawContext, mouseX, mouseY, delta);
 
             final int x = this.button.getX();
             final int y = this.button.getY();
-            final int w = x + this.button.getWidth();
+            final int w = x + this.button.width();
             final int h = y + this.button.getHeight();
 
             final boolean enabled = this.option.isAvailable();

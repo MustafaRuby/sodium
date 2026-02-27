@@ -1,10 +1,8 @@
 package me.jellysquid.mods.sodium.client.data.config;
 
 import me.jellysquid.mods.sodium.mixin.MixinOption;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.CustomValue;
-import net.fabricmc.loader.api.metadata.ModMetadata;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -131,39 +129,41 @@ public class MixinConfig {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void applyModOverrides() {
-        for (ModContainer container : FabricLoader.getInstance().getAllMods()) {
-            ModMetadata meta = container.getMetadata();
+        if (ModList.get() == null) {
+            return;
+        }
 
-            if (meta.containsCustomValue(JSON_KEY_SODIUM_OPTIONS)) {
-                CustomValue overrides = meta.getCustomValue(JSON_KEY_SODIUM_OPTIONS);
+        for (IModInfo modInfo : ModList.get().getMods()) {
+            // On Forge, mods can provide sodium:options overrides via custom properties
+            // in their mods.toml [[properties]] section
+            Object sodiumOptions = modInfo.getModProperties().get("sodium:options");
 
-                if (overrides.getType() != CustomValue.CvType.OBJECT) {
-                    LOGGER.warn("Mod '{}' contains invalid Sodium option overrides, ignoring", meta.getId());
-                    continue;
-                }
+            if (sodiumOptions instanceof Map) {
+                Map<String, Object> overrides = (Map<String, Object>) sodiumOptions;
 
-                for (Map.Entry<String, CustomValue> entry : overrides.getAsObject()) {
-                    this.applyModOverride(meta, entry.getKey(), entry.getValue());
+                for (Map.Entry<String, Object> entry : overrides.entrySet()) {
+                    this.applyModOverride(modInfo, entry.getKey(), entry.getValue());
                 }
             }
         }
     }
 
-    private void applyModOverride(ModMetadata meta, String name, CustomValue value) {
+    private void applyModOverride(IModInfo modInfo, String name, Object value) {
         MixinOption option = this.options.get(name);
 
         if (option == null) {
-            LOGGER.warn("Mod '{}' attempted to override option '{}', which doesn't exist, ignoring", meta.getId(), name);
+            LOGGER.warn("Mod '{}' attempted to override option '{}', which doesn't exist, ignoring", modInfo.getModId(), name);
             return;
         }
 
-        if (value.getType() != CustomValue.CvType.BOOLEAN) {
-            LOGGER.warn("Mod '{}' attempted to override option '{}' with an invalid value, ignoring", meta.getId(), name);
+        if (!(value instanceof Boolean)) {
+            LOGGER.warn("Mod '{}' attempted to override option '{}' with an invalid value, ignoring", modInfo.getModId(), name);
             return;
         }
 
-        boolean enabled = value.getAsBoolean();
+        boolean enabled = (Boolean) value;
 
         // disabling the option takes precedence over enabling
         if (!enabled && option.isEnabled()) {
@@ -171,7 +171,7 @@ public class MixinConfig {
         }
 
         if (!enabled || option.isEnabled() || option.getDefiningMods().isEmpty()) {
-            option.addModOverride(enabled, meta.getId());
+            option.addModOverride(enabled, modInfo.getModId());
         }
     }
 

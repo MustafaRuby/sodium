@@ -8,17 +8,17 @@ import me.jellysquid.mods.sodium.client.util.DirectionUtil;
 import net.caffeinemc.mods.sodium.api.texture.SpriteUtil;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.minecraft.client.color.item.ItemColorProvider;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.LocalRandom;
-import net.minecraft.util.math.random.Random;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
+import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,7 +32,7 @@ import java.util.List;
 @Mixin(ItemRenderer.class)
 public class ItemRendererMixin {
     @Unique
-    private final Random random = new LocalRandom(42L);
+    private final RandomSource random = new LocalRandom(42L);
 
     @Shadow
     @Final
@@ -43,7 +43,7 @@ public class ItemRendererMixin {
      * @author JellySquid
      */
     @Inject(method = "renderBakedItemModel", at = @At("HEAD"), cancellable = true)
-    private void renderModelFast(BakedModel model, ItemStack itemStack, int light, int overlay, MatrixStack matrixStack, VertexConsumer vertexConsumer, CallbackInfo ci) {
+    private void renderModelFast(BakedModel model, ItemStack itemStack, int light, int overlay, PoseStack matrixStack, VertexConsumer vertexConsumer, CallbackInfo ci) {
         var writer = VertexConsumerUtils.convertOrLog(vertexConsumer);
 
         if (writer == null) {
@@ -52,10 +52,10 @@ public class ItemRendererMixin {
 
         ci.cancel();
 
-        Random random = this.random;
-        MatrixStack.Entry matrices = matrixStack.peek();
+        RandomSource random = this.random;
+        PoseStack.Entry matrices = matrixStack.peek();
 
-        ItemColorProvider colorProvider = null;
+        ItemColor colorProvider = null;
 
         if (!itemStack.isEmpty()) {
             colorProvider = ((ItemColorsExtended) this.colors).sodium$getColorProvider(itemStack);
@@ -80,7 +80,7 @@ public class ItemRendererMixin {
 
     @Unique
     @SuppressWarnings("ForLoopReplaceableByForEach")
-    private void renderBakedItemQuads(MatrixStack.Entry matrices, VertexBufferWriter writer, List<BakedQuad> quads, ItemStack itemStack, ItemColorProvider colorProvider, int light, int overlay) {
+    private void renderBakedItemQuads(PoseStack.Entry matrices, VertexBufferWriter writer, List<BakedQuad> quads, ItemStack itemStack, ItemColor colorProvider, int light, int overlay) {
         for (int i = 0; i < quads.size(); i++) {
             BakedQuad bakedQuad = quads.get(i);
 

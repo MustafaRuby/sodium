@@ -6,11 +6,11 @@ import net.caffeinemc.mods.sodium.api.vertex.attributes.common.PositionAttribute
 import net.caffeinemc.mods.sodium.api.vertex.format.VertexFormatDescription;
 import net.caffeinemc.mods.sodium.api.vertex.format.VertexFormatRegistry;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.TextureAttribute;
-import net.minecraft.client.render.VertexFormats;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public final class ParticleVertex {
     public static final VertexFormatDescription FORMAT = VertexFormatRegistry.instance()
-            .get(VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
+            .get(DefaultVertexFormat.POSITION_TEXTURE_COLOR_LIGHT);
 
     public static final int STRIDE = 28;
 

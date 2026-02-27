@@ -9,8 +9,8 @@ import me.jellysquid.mods.sodium.client.gl.shader.uniform.GlUniformMatrix4f;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.impl.CompactChunkVertex;
 import me.jellysquid.mods.sodium.client.util.TextureUtil;
 import me.jellysquid.mods.sodium.mixin.core.render.texture.SpriteAtlasTextureAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import org.joml.Matrix4fc;
 import org.lwjgl.opengl.GL32C;
 
@@ -49,9 +49,9 @@ public class ChunkShaderInterface {
         this.bindTexture(ChunkShaderTextureSlot.BLOCK, TextureUtil.getBlockTextureId());
         this.bindTexture(ChunkShaderTextureSlot.LIGHT, TextureUtil.getLightTextureId());
 
-        var textureAtlas = (SpriteAtlasTextureAccessor) MinecraftClient.getInstance()
+        var textureAtlas = (TextureAtlasAccessor) Minecraft.getInstance()
                 .getTextureManager()
-                .getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
+                .getTexture(TextureAtlas.BLOCK_ATLAS_TEXTURE);
 
         // There is a limited amount of sub-texel precision when using hardware texture sampling. The mapped texture
         // area must be "shrunk" by at least one sub-texel to avoid bleed between textures in the atlas. And since we
@@ -60,7 +60,7 @@ public class ChunkShaderInterface {
         double subTexelOffset = 1.0f / CompactChunkVertex.TEXTURE_MAX_VALUE;
 
         this.uniformTexCoordShrink.set(
-                (float) (subTexelOffset - (((1.0D / textureAtlas.getWidth()) / subTexelPrecision))),
+                (float) (subTexelOffset - (((1.0D / textureAtlas.width()) / subTexelPrecision))),
                 (float) (subTexelOffset - (((1.0D / textureAtlas.getHeight()) / subTexelPrecision)))
         );
 

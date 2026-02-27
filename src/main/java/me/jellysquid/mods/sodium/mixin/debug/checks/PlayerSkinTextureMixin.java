@@ -1,15 +1,15 @@
 package me.jellysquid.mods.sodium.mixin.debug.checks;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.PlayerSkinTexture;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.HttpTexture;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(PlayerSkinTexture.class)
+@Mixin(HttpTexture.class)
 public abstract class PlayerSkinTextureMixin {
     @Shadow
     private boolean loaded;
@@ -17,9 +17,9 @@ public abstract class PlayerSkinTextureMixin {
     @Shadow
     protected abstract void uploadTexture(NativeImage image);
 
-    @Inject(method = "onTextureLoaded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;execute(Ljava/lang/Runnable;)V", shift = At.Shift.BEFORE), cancellable = true)
+    @Inject(method = "onTextureLoaded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;execute(Ljava/lang/Runnable;)V", shift = At.Shift.BEFORE), cancellable = true)
     private void validateCurrentThread$loadTextureCallback(NativeImage image, CallbackInfo ci) {
-        MinecraftClient.getInstance().execute(() -> {
+        Minecraft.getInstance().execute(() -> {
             this.loaded = true;
             this.uploadTexture(image);
         });

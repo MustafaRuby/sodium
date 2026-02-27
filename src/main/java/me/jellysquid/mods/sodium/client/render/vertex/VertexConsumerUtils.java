@@ -1,7 +1,7 @@
 package me.jellysquid.mods.sodium.client.render.vertex;
 
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.minecraft.client.render.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 public class VertexConsumerUtils {
     /**

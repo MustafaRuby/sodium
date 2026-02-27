@@ -3,13 +3,13 @@ package me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenCustomHashMap;
 import me.jellysquid.mods.sodium.client.util.DirectionUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.function.BooleanBiFunction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.level.BlockGetter;
 
 public class BlockOcclusionCache {
     private static final int CACHE_SIZE = 512;
@@ -21,7 +21,7 @@ public class BlockOcclusionCache {
 
     private final Object2IntLinkedOpenCustomHashMap<ShapeComparison> comparisonLookupTable;
     private final ShapeComparison cachedComparisonObject = new ShapeComparison();
-    private final BlockPos.Mutable cachedPositionObject = new BlockPos.Mutable();
+    private final BlockPos.MutableBlockPos cachedPositionObject = new BlockPos.MutableBlockPos();
 
     public BlockOcclusionCache() {
         this.comparisonLookupTable = new Object2IntLinkedOpenCustomHashMap<>(CACHE_SIZE, 0.5F, new ShapeComparison.ShapeComparisonStrategy());
@@ -35,9 +35,9 @@ public class BlockOcclusionCache {
      * @param facing The facing direction of the side to check
      * @return True if the block side facing {@param dir} is not occluded, otherwise false
      */
-    public boolean shouldDrawSide(BlockState selfState, BlockView view, BlockPos selfPos, Direction facing) {
-        BlockPos.Mutable otherPos = this.cachedPositionObject;
-        otherPos.set(selfPos.getX() + facing.getOffsetX(), selfPos.getY() + facing.getOffsetY(), selfPos.getZ() + facing.getOffsetZ());
+    public boolean shouldDrawSide(BlockState selfState, BlockGetter view, BlockPos selfPos, Direction facing) {
+        BlockPos.MutableBlockPos otherPos = this.cachedPositionObject;
+        otherPos.set(selfPos.getX() + facing.getStepX(), selfPos.getY() + facing.getStepY(), selfPos.getZ() + facing.getStepZ());
 
         BlockState otherState = view.getBlockState(otherPos);
 
@@ -49,7 +49,7 @@ public class BlockOcclusionCache {
         }
 
         // If the other block is transparent, then it is unable to hide any geometry.
-        if (!otherState.isOpaque()) {
+        if (!otherState.canOcclude()) {
             return true;
         }
 
@@ -70,7 +70,7 @@ public class BlockOcclusionCache {
         }
 
         // If both blocks use a full-cube cull shape, then they will always hide the faces between each other
-        if (selfShape == VoxelShapes.fullCube() && otherShape == VoxelShapes.fullCube()) {
+        if (selfShape == Shapes.fullCube() && otherShape == Shapes.fullCube()) {
             return false;
         }
 
@@ -93,7 +93,7 @@ public class BlockOcclusionCache {
     }
 
     private boolean calculate(ShapeComparison comparison) {
-        boolean result = VoxelShapes.matchesAnywhere(comparison.self, comparison.other, BooleanBiFunction.ONLY_FIRST);
+        boolean result = Shapes.matchesAnywhere(comparison.self, comparison.other, BooleanBiFunction.ONLY_FIRST);
 
         // Remove entries while the table is too large
         while (this.comparisonLookupTable.size() >= CACHE_SIZE) {

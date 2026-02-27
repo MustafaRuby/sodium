@@ -1,25 +1,25 @@
 package me.jellysquid.mods.sodium.mixin.features.render.immediate;
 
-import me.jellysquid.mods.sodium.mixin.core.render.immediate.consumer.OverlayVertexConsumerMixin;
-import net.minecraft.client.render.OverlayVertexConsumer;
-import net.minecraft.client.render.model.BakedQuadFactory;
-import net.minecraft.client.render.model.json.JsonUnbakedModel;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.Direction;
+import me.jellysquid.mods.sodium.mixin.core.render.immediate.consumer.SheetedDecalTextureGeneratorMixin;
+import net.minecraft.client.renderer.SheetedDecalTextureGenerator;
+import net.minecraft.client.renderer.block.model.BakedQuadFactory;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.Direction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(Direction.class)
 public class DirectionMixin {
     /**
-     * Benchmarking looking at a ton of glinted/lodestone compasses: time spent in {@link OverlayVertexConsumerMixin#writeVerticesSlow}
+     * Benchmarking looking at a ton of glinted/lodestone compasses: time spent in {@link SheetedDecalTextureGeneratorMixin#writeVerticesSlow}
      * <ul>
      *     <li>Before optimization: 10.4% (n=2979)</li>
      *     <li>After optimization: 1.5% (n=2409)</li>
      * </ul>
      * Used by:
      * <ul>
-     *     <li>{@link OverlayVertexConsumer}</li>
+     *     <li>{@link SheetedDecalTextureGenerator}</li>
      *     <li>UV-locked faces and cullfaces in {@link JsonUnbakedModel} and {@link BakedQuadFactory}</li>
      *     <li>Raycasts, when creating the {@link BlockHitResult}</li>
      * </ul>

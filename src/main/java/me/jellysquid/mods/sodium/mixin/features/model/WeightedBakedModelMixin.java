@@ -1,12 +1,12 @@
 package me.jellysquid.mods.sodium.mixin.features.model;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.WeightedBakedModel;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.WeightedBakedModel;
 import net.minecraft.util.collection.Weighted;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 
@@ -27,7 +27,7 @@ public class WeightedBakedModelMixin {
      * @reason Avoid excessive object allocations
      */
     @Overwrite
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
         Weighted.Present<BakedModel> quad = getAt(this.models, Math.abs((int) random.nextLong()) % this.totalWeight);
 
         if (quad != null) {
