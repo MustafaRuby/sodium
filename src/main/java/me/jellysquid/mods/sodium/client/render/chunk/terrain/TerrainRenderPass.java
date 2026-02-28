@@ -22,12 +22,12 @@ public class TerrainRenderPass {
 
     @Deprecated
     public void startDrawing() {
-        this.layer.startDrawing();
+        this.layer.setupRenderState();
     }
 
     @Deprecated
     public void endDrawing() {
-        this.layer.endDrawing();
+        this.layer.clearRenderState();
     }
 
     public boolean supportsFragmentDiscard() {

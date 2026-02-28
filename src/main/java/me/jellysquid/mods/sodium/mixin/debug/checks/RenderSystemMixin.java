@@ -1,6 +1,6 @@
 package me.jellysquid.mods.sodium.mixin.debug.checks;
 
-import com.mojang.blaze3d.systems.RenderCall;
+import com.mojang.blaze3d.pipeline.RenderCall;
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.jellysquid.mods.sodium.client.render.util.DeferredRenderTask;
 import me.jellysquid.mods.sodium.client.render.util.RenderAsserts;

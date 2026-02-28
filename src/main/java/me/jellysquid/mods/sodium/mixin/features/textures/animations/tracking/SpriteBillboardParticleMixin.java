@@ -26,17 +26,17 @@ public abstract class SpriteBillboardParticleMixin extends SingleQuadParticle {
         super(world, x, y, z);
     }
 
-    @Inject(method = "setSprite(Lnet/minecraft/client/texture/TextureAtlasSprite;)V", at = @At("RETURN"))
+    @Inject(method = "setSprite(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V", at = @At("RETURN"))
     private void afterSetSprite(TextureAtlasSprite sprite, CallbackInfo ci) {
         this.shouldTickSprite = sprite != null && SpriteUtil.INSTANCE.hasAnimation(sprite);
     }
 
     @Override
-    public void buildGeometry(VertexConsumer vertexConsumer, Camera camera, float tickDelta) {
+    public void render(VertexConsumer vertexConsumer, Camera camera, float tickDelta) {
         if (this.shouldTickSprite) {
             SpriteUtil.INSTANCE.markSpriteActive(this.sprite);
         }
 
-        super.buildGeometry(vertexConsumer, camera, tickDelta);
+        super.render(vertexConsumer, camera, tickDelta);
     }
 }

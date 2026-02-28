@@ -19,16 +19,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class GameRendererMixin {
     @Shadow
     @Final
-    Minecraft client;
+    Minecraft minecraft;
 
     @Shadow
     @Final
-    private RenderBuffers buffers;
+    private RenderBuffers renderBuffers;
 
     @Unique
     private static boolean HAS_RENDERED_OVERLAY_ONCE = false;
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;draw()V", shift = At.Shift.AFTER))
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;flush()V", shift = At.Shift.AFTER))
     private void onRender(float tickDelta, long startTime, boolean tick, CallbackInfo ci) {
         // Do not start updating the console overlay until the font renderer is ready
         // This prevents the console from using tofu boxes for everything during early startup
@@ -38,16 +38,16 @@ public class GameRendererMixin {
             }
         }
 
-        this.client.getProfiler()
+        this.minecraft.getProfiler()
                 .push("sodium_console_overlay");
 
-        GuiGraphics drawContext = new GuiGraphics(this.client, this.buffers.getEntityVertexMultiConsumer());
+        GuiGraphics drawContext = new GuiGraphics(this.minecraft, this.renderBuffers.bufferSource());
 
         ConsoleHooks.render(drawContext, GLFW.glfwGetTime());
 
-        drawContext.draw();
+        drawContext.flush();
 
-        this.client.getProfiler()
+        this.minecraft.getProfiler()
                 .pop();
 
         HAS_RENDERED_OVERLAY_ONCE = true;

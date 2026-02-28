@@ -4,12 +4,12 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public enum CommonVertexAttribute {
-    POSITION(DefaultVertexFormat.POSITION_ELEMENT),
-    COLOR(DefaultVertexFormat.COLOR_ELEMENT),
-    TEXTURE(DefaultVertexFormat.TEXTURE_ELEMENT),
-    OVERLAY(DefaultVertexFormat.OVERLAY_ELEMENT),
-    LIGHT(DefaultVertexFormat.LIGHT_ELEMENT),
-    NORMAL(DefaultVertexFormat.NORMAL_ELEMENT);
+    POSITION(DefaultVertexFormat.ELEMENT_POSITION),
+    COLOR(DefaultVertexFormat.ELEMENT_COLOR),
+    TEXTURE(DefaultVertexFormat.ELEMENT_UV0),
+    OVERLAY(DefaultVertexFormat.ELEMENT_UV1),
+    LIGHT(DefaultVertexFormat.ELEMENT_UV2),
+    NORMAL(DefaultVertexFormat.ELEMENT_NORMAL);
 
     private final VertexFormatElement element;
 
@@ -30,6 +30,6 @@ public enum CommonVertexAttribute {
     }
 
     public int getByteLength() {
-        return this.element.getByteLength();
+        return this.element.getByteSize();
     }
 }

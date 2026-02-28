@@ -30,7 +30,7 @@ public class ShaderProgramMixin {
 
     @Shadow
     @Final
-    private int glRef;
+    private int programId;
 
     @Unique
     private Object2IntMap<String> uniformCache;
@@ -41,7 +41,7 @@ public class ShaderProgramMixin {
         this.uniformCache.defaultReturnValue(-1);
 
         for (var samplerName : this.samplerNames) {
-            var location = GlUniform.getUniformLocation(this.glRef, samplerName);
+            var location = Uniform.glGetUniformLocation(this.programId, samplerName);
 
             if (location == -1) {
                 throw new IllegalStateException("Failed to find uniform '%s' during shader init".formatted(samplerName));
@@ -51,7 +51,7 @@ public class ShaderProgramMixin {
         }
     }
 
-    @Redirect(method = "bind", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/GlUniform;getUniformLocation(ILjava/lang/CharSequence;)I"))
+    @Redirect(method = "apply", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/shaders/Uniform;glGetUniformLocation(ILjava/lang/CharSequence;)I"))
     private int redirectGetUniformLocation(int program, CharSequence name) {
         var location = this.uniformCache.getInt(name);
 

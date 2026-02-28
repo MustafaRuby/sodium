@@ -44,7 +44,7 @@ public class BlockOcclusionCache {
         // Blocks can define special behavior to control whether faces are rendered.
         // This is mostly used by transparent blocks (Leaves, Glass, etc.) to not render interior faces between blocks
         // of the same type.
-        if (selfState.isSideInvisible(otherState, facing)) {
+        if (selfState.skipRendering(otherState, facing)) {
             return false;
         }
 
@@ -54,7 +54,7 @@ public class BlockOcclusionCache {
         }
 
         // The cull shape of the block being rendered
-        VoxelShape selfShape = selfState.getCullingFace(view, selfPos, facing);
+        VoxelShape selfShape = selfState.getFaceOcclusionShape(view, selfPos, facing);
 
         // If the block being rendered has an empty cull shape, intersection tests will always fail
         if (selfShape.isEmpty()) {
@@ -62,7 +62,7 @@ public class BlockOcclusionCache {
         }
 
         // The cull shape of the block neighboring the one being rendered
-        VoxelShape otherShape = otherState.getCullingFace(view, otherPos, DirectionUtil.getOpposite(facing));
+        VoxelShape otherShape = otherState.getFaceOcclusionShape(view, otherPos, DirectionUtil.getOpposite(facing));
 
         // If the other block has an empty cull shape, then it cannot hide any geometry
         if (otherShape.isEmpty()) {
@@ -70,7 +70,7 @@ public class BlockOcclusionCache {
         }
 
         // If both blocks use a full-cube cull shape, then they will always hide the faces between each other
-        if (selfShape == Shapes.fullCube() && otherShape == Shapes.fullCube()) {
+        if (selfShape == Shapes.block() && otherShape == Shapes.block()) {
             return false;
         }
 
@@ -93,7 +93,7 @@ public class BlockOcclusionCache {
     }
 
     private boolean calculate(ShapeComparison comparison) {
-        boolean result = Shapes.matchesAnywhere(comparison.self, comparison.other, BooleanBiFunction.ONLY_FIRST);
+        boolean result = Shapes.joinIsNotEmpty(comparison.self, comparison.other, BooleanOp.ONLY_FIRST);
 
         // Remove entries while the table is too large
         while (this.comparisonLookupTable.size() >= CACHE_SIZE) {

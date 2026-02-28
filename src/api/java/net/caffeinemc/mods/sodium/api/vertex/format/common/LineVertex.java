@@ -9,7 +9,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public final class LineVertex  {
     public static final VertexFormatDescription FORMAT = VertexFormatRegistry.instance()
-            .get(DefaultVertexFormat.LINES);
+            .get(DefaultVertexFormat.POSITION_COLOR_NORMAL);
 
     public static final int STRIDE = 20;
 

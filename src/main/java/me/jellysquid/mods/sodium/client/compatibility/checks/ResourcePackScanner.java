@@ -4,7 +4,7 @@ import me.jellysquid.mods.sodium.client.gui.console.Console;
 import me.jellysquid.mods.sodium.client.gui.console.message.MessageLevel;
 import net.minecraft.server.packs.resources.*;
 import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.PathPackResources;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Component;
@@ -53,7 +53,7 @@ public class ResourcePackScanner {
      * Detailed information on shader files replaced by resource packs is printed in the client log.
      */
     public static void checkIfCoreShaderLoaded(ResourceManager manager) {
-        var outputs = manager.streamResourcePacks()
+        var outputs = manager.listPacks()
                 .filter(ResourcePackScanner::isExternalResourcePack)
                 .map(ResourcePackScanner::scanResources)
                 .toList();
@@ -154,7 +154,7 @@ public class ResourcePackScanner {
         final var unsupportedShaderInstances = new ArrayList<String>();
         final var unsupportedShaderIncludes = new ArrayList<String>();
 
-        resourcePack.findResources(ResourceType.CLIENT_RESOURCES, ResourceLocation.DEFAULT_NAMESPACE, "shaders", (identifier, supplier) -> {
+        resourcePack.listResources(PackType.CLIENT_RESOURCES, ResourceLocation.DEFAULT_NAMESPACE, "shaders", (identifier, supplier) -> {
             // Trim full shader file path to only contain the filename
             final var path = identifier.getPath();
             final var name = path.substring(path.lastIndexOf('/') + 1);
@@ -177,11 +177,11 @@ public class ResourcePackScanner {
     }
 
     private static boolean isExternalResourcePack(PackResources pack) {
-        return pack instanceof PathPackResources || pack instanceof PathPackResources;
+        return pack instanceof PathPackResources;
     }
 
     private static String getResourcePackName(PackResources pack) {
-        var path = pack.getName();
+        var path = pack.packId();
 
         // Omit 'file/' prefix for the in-game message
         return path.startsWith("file/") ? path.substring(5) : path;
@@ -198,12 +198,12 @@ public class ResourcePackScanner {
     private static List<String> determineIgnoredShaders(PackResources resourcePack) {
         var ignoredShaders = new ArrayList<String>();
         try {
-            var meta = resourcePack.parseMetadata(SodiumResourcePackMetadata.SERIALIZER);
+            var meta = resourcePack.getMetadataSection(SodiumResourcePackMetadata.SERIALIZER);
             if (meta != null) {
                 ignoredShaders.addAll(meta.ignoredShaders());
             }
         } catch (IOException x) {
-            LOGGER.error("Failed to load pack.mcmeta file for resource pack '{}'", resourcePack.getName());
+            LOGGER.error("Failed to load pack.mcmeta file for resource pack '{}'", resourcePack.packId());
         }
         return ignoredShaders;
     }

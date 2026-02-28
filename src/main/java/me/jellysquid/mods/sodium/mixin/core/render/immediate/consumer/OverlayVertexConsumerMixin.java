@@ -7,7 +7,7 @@ import net.caffeinemc.mods.sodium.api.vertex.attributes.common.ColorAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.TextureAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.format.VertexFormatDescription;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
-import net.minecraft.client.renderer.SheetedDecalTextureGenerator;
+import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.core.Direction;
 import org.joml.Matrix3f;
@@ -101,12 +101,12 @@ public class OverlayVertexConsumerMixin implements VertexBufferWriter {
             normal.z = NormI8.unpackZ(packedNormal);
 
             Vector3f transformedNormal = inverseNormalMatrix.transform(normal);
-            Direction direction = Direction.getFacing(transformedNormal.x(), transformedNormal.y(), transformedNormal.z());
+            Direction direction = Direction.getNearest(transformedNormal.x(), transformedNormal.y(), transformedNormal.z());
 
             Vector4f transformedTexture = inverseTextureMatrix.transform(position);
             transformedTexture.rotateY(3.1415927F);
             transformedTexture.rotateX(-1.5707964F);
-            transformedTexture.rotate(direction.getRotationQuaternion());
+            transformedTexture.rotate(direction.getRotation());
 
             float textureU = -transformedTexture.x() * textureScale;
             float textureV = -transformedTexture.y() * textureScale;

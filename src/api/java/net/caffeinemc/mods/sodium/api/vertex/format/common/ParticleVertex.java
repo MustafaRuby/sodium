@@ -10,7 +10,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public final class ParticleVertex {
     public static final VertexFormatDescription FORMAT = VertexFormatRegistry.instance()
-            .get(DefaultVertexFormat.POSITION_TEXTURE_COLOR_LIGHT);
+            .get(DefaultVertexFormat.PARTICLE);
 
     public static final int STRIDE = 28;
 

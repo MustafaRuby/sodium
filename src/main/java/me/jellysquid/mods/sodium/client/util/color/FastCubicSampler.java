@@ -10,9 +10,9 @@ public class FastCubicSampler {
     private static final int DIAMETER = 6;
 
     public static Vec3 sampleColor(Vec3 pos, ColorFetcher colorFetcher, Function<Vec3, Vec3> transformer) {
-        int intX = Mth.floor(pos.getX());
-        int intY = Mth.floor(pos.getY());
-        int intZ = Mth.floor(pos.getZ());
+        int intX = Mth.floor(pos.x());
+        int intY = Mth.floor(pos.y());
+        int intZ = Mth.floor(pos.z());
 
         int[] values = new int[DIAMETER * DIAMETER * DIAMETER];
 
@@ -33,12 +33,12 @@ public class FastCubicSampler {
         // Fast path! Skip blending the colors if all inputs are the same
         if (isHomogenousArray(values)) {
             // Take the first color if it's homogenous (all elements are the same...)
-            return transformer.apply(Vec3.unpackRgb(values[0]));
+            return transformer.apply(Vec3.fromRGB24(values[0]));
         }
 
-        double deltaX = pos.getX() - (double)intX;
-        double deltaY = pos.getY() - (double)intY;
-        double deltaZ = pos.getZ() - (double)intZ;
+        double deltaX = pos.x() - (double)intX;
+        double deltaY = pos.y() - (double)intY;
+        double deltaZ = pos.z() - (double)intZ;
 
         Vec3 sum = Vec3.ZERO;
         double totalFactor = 0.0D;
@@ -55,13 +55,13 @@ public class FastCubicSampler {
                     double factor = densityX * densityY * densityZ;
                     totalFactor += factor;
 
-                    Vec3 color = transformer.apply(Vec3.unpackRgb(values[index(x, y, z)]));
-                    sum = sum.add(color.multiply(factor));
+                    Vec3 color = transformer.apply(Vec3.fromRGB24(values[index(x, y, z)]));
+                    sum = sum.add(color.scale(factor));
                 }
             }
         }
 
-        sum = sum.multiply(1.0D / totalFactor);
+        sum = sum.scale(1.0D / totalFactor);
 
         return sum;
     }

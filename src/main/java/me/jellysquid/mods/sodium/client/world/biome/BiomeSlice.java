@@ -10,8 +10,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.biome.BiomeResolver;
-import net.minecraft.world.level.biome.Climate;
+import net.minecraft.util.LinearCongruentialGenerator;
+import net.minecraft.core.QuartPos;
 
 public class BiomeSlice {
     private static final int SIZE = 3 * 4; // 3 chunks * 4 biomes per chunk
@@ -27,9 +27,9 @@ public class BiomeSlice {
     private int worldX, worldY, worldZ;
 
     public void update(ClientLevel world, ChunkRenderContext context) {
-        this.worldX = context.getOrigin().minX() - 16;
-        this.worldY = context.getOrigin().minY() - 16;
-        this.worldZ = context.getOrigin().minZ() - 16;
+        this.worldX = context.getOrigin().minBlockX() - 16;
+        this.worldY = context.getOrigin().minBlockY() - 16;
+        this.worldZ = context.getOrigin().minBlockZ() - 16;
 
         this.biomeSeed = BiomeSeedProvider.getBiomeSeed(world);
 
@@ -40,9 +40,9 @@ public class BiomeSlice {
     }
 
     private void copyBiomeData(Level world, ChunkRenderContext context) {
-        var defaultValue = world.getRegistryManager()
-                .get(RegistryKeys.BIOME)
-                .entryOf(BiomeKeys.PLAINS);
+        var defaultValue = world.registryAccess()
+                .registryOrThrow(Registries.BIOME)
+                .getHolderOrThrow(Biomes.PLAINS);
 
         for (int sectionX = 0; sectionX < 3; sectionX++) {
             for (int sectionY = 0; sectionY < 3; sectionY++) {
@@ -95,15 +95,15 @@ public class BiomeSlice {
 
         for (int cellX = 1; cellX < 11; cellX++) {
             int worldCellX = offsetX + cellX;
-            long seedX = Climate.mixSeed(seed, worldCellX);
+            long seedX = LinearCongruentialGenerator.next(seed, worldCellX);
 
             for (int cellY = 1; cellY < 11; cellY++) {
                 int worldCellY = offsetY + cellY;
-                long seedXY = Climate.mixSeed(seedX, worldCellY);
+                long seedXY = LinearCongruentialGenerator.next(seedX, worldCellY);
 
                 for (int cellZ = 1; cellZ < 11; cellZ++) {
                     int worldCellZ = offsetZ + cellZ;
-                    long seedXYZ = Climate.mixSeed(seedXY, worldCellZ);
+                    long seedXYZ = LinearCongruentialGenerator.next(seedXY, worldCellZ);
 
                     this.calculateBias(dataArrayIndex(cellX, cellY, cellZ),
                             worldCellX, worldCellY, worldCellZ, seedXYZ);
@@ -114,12 +114,12 @@ public class BiomeSlice {
     }
 
     private void calculateBias(int index, int x, int y, int z, long seed) {
-        seed = Climate.mixSeed(seed, x);
-        seed = Climate.mixSeed(seed, y);
-        seed = Climate.mixSeed(seed, z);
+        seed = LinearCongruentialGenerator.next(seed, x);
+        seed = LinearCongruentialGenerator.next(seed, y);
+        seed = LinearCongruentialGenerator.next(seed, z);
 
-        var gradX = getBias(seed); seed = Climate.mixSeed(seed, this.biomeSeed);
-        var gradY = getBias(seed); seed = Climate.mixSeed(seed, this.biomeSeed);
+        var gradX = getBias(seed); seed = LinearCongruentialGenerator.next(seed, this.biomeSeed);
+        var gradY = getBias(seed); seed = LinearCongruentialGenerator.next(seed, this.biomeSeed);
         var gradZ = getBias(seed);
 
         this.bias.set(index, gradX, gradY, gradZ);
@@ -151,9 +151,9 @@ public class BiomeSlice {
         int relZ = z - this.worldZ;
 
         int centerIndex = dataArrayIndex(
-                BiomeCoords.fromBlock(relX - 2),
-                BiomeCoords.fromBlock(relY - 2),
-                BiomeCoords.fromBlock(relZ - 2));
+                QuartPos.fromBlock(relX - 2),
+                QuartPos.fromBlock(relY - 2),
+                QuartPos.fromBlock(relZ - 2));
 
         if (this.uniform[centerIndex]) {
             return this.biomes[centerIndex];
@@ -167,13 +167,13 @@ public class BiomeSlice {
         int y = worldY - 2;
         int z = worldZ - 2;
 
-        int intX = BiomeCoords.fromBlock(x);
-        int intY = BiomeCoords.fromBlock(y);
-        int intZ = BiomeCoords.fromBlock(z);
+        int intX = QuartPos.fromBlock(x);
+        int intY = QuartPos.fromBlock(y);
+        int intZ = QuartPos.fromBlock(z);
 
-        float fracX = BiomeCoords.method_39920(x) * 0.25f;
-        float fracY = BiomeCoords.method_39920(y) * 0.25f;
-        float fracZ = BiomeCoords.method_39920(z) * 0.25f;
+        float fracX = QuartPos.quartLocal(x) * 0.25f;
+        float fracY = QuartPos.quartLocal(y) * 0.25f;
+        float fracZ = QuartPos.quartLocal(z) * 0.25f;
 
         float closestDistance = Float.POSITIVE_INFINITY;
         int closestArrayIndex = 0;

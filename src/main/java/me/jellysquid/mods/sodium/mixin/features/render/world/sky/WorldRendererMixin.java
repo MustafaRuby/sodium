@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.Camera;
-import net.minecraft.client.CameraSubmersionType;
+import net.minecraft.world.level.material.FogType;
 import net.minecraft.client.renderer.LevelRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -30,13 +30,13 @@ public class WorldRendererMixin {
      * <p>When updating Sodium to new releases of the game, please check for new
      * ways the fog can be reduced in {@link FogRenderer#applyFog(Camera, FogRenderer.FogType, float, boolean, float)} ()}.</p>
      */
-    @Inject(method = "renderSky(Lnet/minecraft/client/util/math/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V", at = @At("HEAD"), cancellable = true)
     private void preRenderSky(PoseStack matrices, Matrix4f projectionMatrix, float tickDelta, Camera camera, boolean thickFog, Runnable fogCallback, CallbackInfo ci) {
         // Cancels sky rendering when the camera is submersed underwater.
         // This prevents the sky from being visible through chunks culled by Sodium's fog occlusion.
         // Fixes https://bugs.mojang.com/browse/MC-152504.
         // Credit to bytzo for noticing the change in 1.18.2.
-        if (camera.getSubmersionType() == CameraSubmersionType.WATER) {
+        if (camera.getFluidInCamera() == FogType.WATER) {
             ci.cancel();
         }
     }

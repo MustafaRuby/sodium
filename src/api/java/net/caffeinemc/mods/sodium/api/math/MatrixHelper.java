@@ -121,11 +121,11 @@ public class MatrixHelper {
      * @param angleY The angle to rotate by on the Y-axis
      * @param angleX The angle to rotate by on the X-axis
      */
-    public static void rotateZYX(PoseStack.Entry matrices, float angleZ, float angleY, float angleX) {
-        matrices.getPositionMatrix()
+    public static void rotateZYX(PoseStack.Pose matrices, float angleZ, float angleY, float angleX) {
+        matrices.pose()
                 .rotateZYX(angleZ, angleY, angleX);
 
-        matrices.getNormalMatrix()
+        matrices.normal()
                 .rotateZYX(angleZ, angleY, angleX);
     }
 

@@ -21,7 +21,7 @@ public class BlockModelRendererMixin {
      * @author embeddedt
      */
     @Inject(method = "renderQuad", at = @At("HEAD"))
-    private void preRenderQuad(BlockAndTintGetter world, BlockState state, BlockPos pos, VertexConsumer vertexConsumer, PoseStack.Entry matrixEntry, BakedQuad quad, float brightness0, float brightness1, float brightness2, float brightness3, int light0, int light1, int light2, int light3, int overlay, CallbackInfo ci) {
+    private void preRenderQuad(BlockAndTintGetter world, BlockState state, BlockPos pos, VertexConsumer vertexConsumer, PoseStack.Pose matrixEntry, BakedQuad quad, float brightness0, float brightness1, float brightness2, float brightness3, int light0, int light1, int light2, int light3, int overlay, CallbackInfo ci) {
         if (quad.getSprite() != null) {
             SpriteUtil.INSTANCE.markSpriteActive(quad.getSprite());
         }

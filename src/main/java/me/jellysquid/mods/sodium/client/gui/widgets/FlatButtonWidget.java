@@ -7,7 +7,7 @@ import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.ComponentPath;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +86,7 @@ public class FlatButtonWidget extends AbstractWidget implements Renderable {
         if (!this.isFocused())
             return false;
 
-        if (KeyCodes.isToggle(keyCode)) {
+        if (CommonInputs.selected(keyCode)) {
             doAction();
             return true;
         }
@@ -116,14 +116,14 @@ public class FlatButtonWidget extends AbstractWidget implements Renderable {
     }
 
     @Override
-    public @Nullable ComponentPath getNavigationPath(FocusNavigationEvent navigation) {
+    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent navigation) {
         if (!this.enabled || !this.visible)
             return null;
-        return super.getNavigationPath(navigation);
+        return super.nextFocusPath(navigation);
     }
 
     @Override
-    public ScreenRectangle getNavigationFocus() {
+    public ScreenRectangle getRectangle() {
         return new ScreenRectangle(this.dim.x(), this.dim.y(), this.dim.width(), this.dim.height());
     }
 

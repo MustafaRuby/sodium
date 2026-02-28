@@ -150,7 +150,7 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
     private void rebuildGUI() {
         this.controls.clear();
 
-        this.clearChildren();
+        this.clearWidgets();
 
         if (this.currentPage == null) {
             if (this.pages.isEmpty()) {
@@ -166,7 +166,7 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
 
         this.undoButton = new FlatButtonWidget(new Dim2i(this.width - 211, this.height - 30, 65, 20), Component.translatable("sodium.options.buttons.undo"), this::undoChanges);
         this.applyButton = new FlatButtonWidget(new Dim2i(this.width - 142, this.height - 30, 65, 20), Component.translatable("sodium.options.buttons.apply"), this::applyChanges);
-        this.closeButton = new FlatButtonWidget(new Dim2i(this.width - 73, this.height - 30, 65, 20), Component.translatable("gui.done"), this::close);
+        this.closeButton = new FlatButtonWidget(new Dim2i(this.width - 73, this.height - 30, 65, 20), Component.translatable("gui.done"), this::onClose);
         this.donateButton = new FlatButtonWidget(new Dim2i(this.width - 128, 6, 100, 20), Component.translatable("sodium.options.buttons.donate"), this::openDonationPage);
         this.hideDonateButton = new FlatButtonWidget(new Dim2i(this.width - 26, 6, 20, 20), Component.literal("x"), this::hideDonationButton);
 
@@ -174,11 +174,11 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
             this.setDonationButtonVisibility(false);
         }
 
-        this.addDrawableChild(this.undoButton);
-        this.addDrawableChild(this.applyButton);
-        this.addDrawableChild(this.closeButton);
-        this.addDrawableChild(this.donateButton);
-        this.addDrawableChild(this.hideDonateButton);
+        this.addRenderableWidget(this.undoButton);
+        this.addRenderableWidget(this.applyButton);
+        this.addRenderableWidget(this.closeButton);
+        this.addRenderableWidget(this.donateButton);
+        this.addRenderableWidget(this.hideDonateButton);
     }
 
     private void setDonationButtonVisibility(boolean value) {
@@ -211,7 +211,7 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
 
             x += width + 6;
 
-            this.addDrawableChild(button);
+            this.addRenderableWidget(button);
         }
     }
 
@@ -225,7 +225,7 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
                 Control<?> control = option.getControl();
                 ControlElement<?> element = control.createElement(new Dim2i(x, y, 200, 18));
 
-                this.addDrawableChild(element);
+                this.addRenderableWidget(element);
 
                 this.controls.add(element);
 
@@ -304,12 +304,12 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
         int boxX = dim.getLimitX() + boxPadding;
 
         Option<?> option = element.getOption();
-        List<FormattedCharSequence> tooltip = new ArrayList<>(this.font.wrapLines(option.getTooltip(), boxWidth - (textPadding * 2)));
+        List<FormattedCharSequence> tooltip = new ArrayList<>(this.font.split(option.getTooltip(), boxWidth - (textPadding * 2)));
 
         OptionImpact impact = option.getImpact();
 
         if (impact != null) {
-            tooltip.add(Language.getInstance().reorder(Component.translatable("sodium.options.performance_impact_string", impact.getLocalizedName()).formatted(ChatFormatting.GRAY)));
+            tooltip.add(Language.getInstance().getVisualOrder(Component.translatable("sodium.options.performance_impact_string", impact.getLocalizedName()).withStyle(ChatFormatting.GRAY)));
         }
 
         int boxHeight = (tooltip.size() * 12) + boxPadding;
@@ -345,17 +345,17 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
 
         Minecraft client = Minecraft.getInstance();
 
-        if (client.world != null) {
+        if (client.level != null) {
             if (flags.contains(OptionFlag.REQUIRES_RENDERER_RELOAD)) {
-                client.worldRenderer.reload();
+                client.levelRenderer.allChanged();
             } else if (flags.contains(OptionFlag.REQUIRES_RENDERER_UPDATE)) {
-                client.worldRenderer.scheduleTerrainUpdate();
+                client.levelRenderer.needsUpdate();
             }
         }
 
         if (flags.contains(OptionFlag.REQUIRES_ASSET_RELOAD)) {
-            client.setMipmapLevels(client.options.getMipmapLevels().getValue());
-            client.reloadResourcesConcurrently();
+            client.updateMaxMipLevel(client.options.mipmapLevels().get());
+            client.delayTextureReload();
         }
 
         if (flags.contains(OptionFlag.REQUIRES_GAME_RESTART)) {
@@ -374,8 +374,8 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
     }
 
     private void openDonationPage() {
-        Util.getOperatingSystem()
-                .open("https://caffeinemc.net/donate");
+        Util.getPlatform()
+                .openUri("https://caffeinemc.net/donate");
     }
 
     @Override
@@ -385,7 +385,7 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
         }
 
         if (this.prompt == null && keyCode == GLFW.GLFW_KEY_P && (modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
-            Minecraft.getInstance().setScreen(new VideoOptionsScreen(this.prevScreen, Minecraft.getInstance().options));
+            Minecraft.getInstance().setScreen(new VideoSettingsScreen(this.prevScreen, Minecraft.getInstance().options));
 
             return true;
         }
@@ -415,8 +415,8 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
     }
 
     @Override
-    public void close() {
-        this.client.setScreen(this.prevScreen);
+    public void onClose() {
+        this.minecraft.setScreen(this.prevScreen);
     }
 
     @Override
@@ -444,11 +444,11 @@ public class SodiumOptionsGUI extends Screen implements ScreenPromptable {
 
     static {
         DONATION_PROMPT_MESSAGE = List.of(
-                FormattedText.concat(Component.literal("Hello!")),
-                FormattedText.concat(Component.literal("It seems that you've been enjoying "), Component.literal("Sodium").setStyle(Style.EMPTY.withColor(0x27eb92)), Component.literal(", the powerful and open rendering optimization mod for Minecraft.")),
-                FormattedText.concat(Component.literal("Mods like these are complex. They require "), Component.literal("thousands of hours").setStyle(Style.EMPTY.withColor(0xff6e00)), Component.literal(" of development, debugging, and tuning to create the experience that players have come to expect.")),
-                FormattedText.concat(Component.literal("If you'd like to show your token of appreciation, and support the development of our mod in the process, then consider "), Component.literal("buying us a coffee").setStyle(Style.EMPTY.withColor(0xed49ce)), Component.literal(".")),
-                FormattedText.concat(Component.literal("And thanks again for using our mod! We hope it helps you (and your computer.)"))
+                FormattedText.composite(Component.literal("Hello!")),
+                FormattedText.composite(Component.literal("It seems that you've been enjoying "), Component.literal("Sodium").setStyle(Style.EMPTY.withColor(0x27eb92)), Component.literal(", the powerful and open rendering optimization mod for Minecraft.")),
+                FormattedText.composite(Component.literal("Mods like these are complex. They require "), Component.literal("thousands of hours").setStyle(Style.EMPTY.withColor(0xff6e00)), Component.literal(" of development, debugging, and tuning to create the experience that players have come to expect.")),
+                FormattedText.composite(Component.literal("If you'd like to show your token of appreciation, and support the development of our mod in the process, then consider "), Component.literal("buying us a coffee").setStyle(Style.EMPTY.withColor(0xed49ce)), Component.literal(".")),
+                FormattedText.composite(Component.literal("And thanks again for using our mod! We hope it helps you (and your computer.)"))
         );
     }
 }

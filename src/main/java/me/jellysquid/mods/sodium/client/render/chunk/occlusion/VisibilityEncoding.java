@@ -12,7 +12,7 @@ public class VisibilityEncoding {
 
         for (int from = 0; from < GraphDirection.COUNT; from++) {
             for (int to = 0; to < GraphDirection.COUNT; to++) {
-                if (occlusionData.isVisibleThrough(GraphDirection.toEnum(from), GraphDirection.toEnum(to))) {
+                if (occlusionData.visibilityBetween(GraphDirection.toEnum(from), GraphDirection.toEnum(to))) {
                     visibilityData |= 1L << bit(from, to);
                 }
             }

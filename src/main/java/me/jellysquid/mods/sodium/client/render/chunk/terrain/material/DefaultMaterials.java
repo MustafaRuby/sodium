@@ -14,21 +14,21 @@ public class DefaultMaterials {
     public static final Material TRANSLUCENT = new Material(DefaultTerrainRenderPasses.TRANSLUCENT, AlphaCutoffParameter.ZERO, true);
 
     public static Material forBlockState(BlockState state) {
-        return forRenderType(ItemBlockRenderTypes.getBlockLayer(state));
+        return forRenderType(ItemBlockRenderTypes.getChunkRenderType(state));
     }
 
     public static Material forFluidState(FluidState state) {
-        return forRenderType(ItemBlockRenderTypes.getFluidLayer(state));
+        return forRenderType(ItemBlockRenderTypes.getRenderLayer(state));
     }
 
     public static Material forRenderType(RenderType layer) {
-        if (layer == RenderType.getSolid()) {
+        if (layer == RenderType.solid()) {
             return SOLID;
-        } else if (layer == RenderType.getCutout()) {
+        } else if (layer == RenderType.cutout()) {
             return CUTOUT;
-        } else if (layer == RenderType.getCutoutMipped() || layer == RenderType.getTripwire()) {
+        } else if (layer == RenderType.cutoutMipped() || layer == RenderType.tripwire()) {
             return CUTOUT_MIPPED;
-        } else if (layer == RenderType.getTranslucent()) {
+        } else if (layer == RenderType.translucent()) {
             return TRANSLUCENT;
         }
 

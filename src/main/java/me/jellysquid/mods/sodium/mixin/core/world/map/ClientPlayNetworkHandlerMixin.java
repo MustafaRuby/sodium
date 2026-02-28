@@ -15,20 +15,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientPacketListener.class)
 public class ClientPlayNetworkHandlerMixin {
     @Shadow
-    private ClientLevel world;
+    private ClientLevel level;
 
     @Inject(
             method = "readLightData",
             at = @At("RETURN")
     )
-    private void onLightDataReceived(int x, int z, LightData data, CallbackInfo ci) {
-        ChunkTrackerHolder.get(this.world)
+    private void onLightDataReceived(int x, int z, ClientboundLightUpdatePacketData data, CallbackInfo ci) {
+        ChunkTrackerHolder.get(this.level)
                 .onChunkStatusAdded(x, z, ChunkStatus.FLAG_HAS_LIGHT_DATA);
     }
 
-    @Inject(method = "onUnloadChunk", at = @At("RETURN"))
+    @Inject(method = "handleForgetLevelChunk", at = @At("RETURN"))
     private void onChunkUnloadPacket(ClientboundForgetLevelChunkPacket packet, CallbackInfo ci) {
-        ChunkTrackerHolder.get(this.world)
+        ChunkTrackerHolder.get(this.level)
                 .onChunkStatusRemoved(packet.getX(), packet.getZ(), ChunkStatus.FLAG_ALL);
     }
 }

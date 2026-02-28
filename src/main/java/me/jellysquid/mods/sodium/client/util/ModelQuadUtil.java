@@ -51,7 +51,7 @@ public class ModelQuadUtil {
         Direction closestFace = null;
 
         for (Direction face : DirectionUtil.ALL_DIRECTIONS) {
-            float dot = normal.dot(face.getUnitVector());
+            float dot = normal.dot(face.step());
 
             if (dot > maxDot) {
                 maxDot = dot;
@@ -59,7 +59,7 @@ public class ModelQuadUtil {
             }
         }
 
-        if (closestFace != null && Mth.approximatelyEquals(maxDot, 1.0f)) {
+        if (closestFace != null && Mth.equal(maxDot, 1.0f)) {
             return ModelQuadFacing.fromDirection(closestFace);
         }
 

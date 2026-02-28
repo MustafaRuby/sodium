@@ -12,9 +12,9 @@ import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryStack;
 
 public class BakedModelEncoder {
-    public static void writeQuadVertices(VertexBufferWriter writer, PoseStack.Entry matrices, ModelQuadView quad, int color, int light, int overlay) {
-        Matrix3f matNormal = matrices.getNormalMatrix();
-        Matrix4f matPosition = matrices.getPositionMatrix();
+    public static void writeQuadVertices(VertexBufferWriter writer, PoseStack.Pose matrices, ModelQuadView quad, int color, int light, int overlay) {
+        Matrix3f matNormal = matrices.normal();
+        Matrix4f matPosition = matrices.pose();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             long buffer = stack.nmalloc(4 * ModelVertex.STRIDE);
@@ -42,9 +42,9 @@ public class BakedModelEncoder {
         }
     }
 
-    public static void writeQuadVertices(VertexBufferWriter writer, PoseStack.Entry matrices, ModelQuadView quad, float r, float g, float b, float a, float[] brightnessTable, boolean colorize, int[] light, int overlay) {
-        Matrix3f matNormal = matrices.getNormalMatrix();
-        Matrix4f matPosition = matrices.getPositionMatrix();
+    public static void writeQuadVertices(VertexBufferWriter writer, PoseStack.Pose matrices, ModelQuadView quad, float r, float g, float b, float a, float[] brightnessTable, boolean colorize, int[] light, int overlay) {
+        Matrix3f matNormal = matrices.normal();
+        Matrix4f matPosition = matrices.pose();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             long buffer = stack.nmalloc(4 * ModelVertex.STRIDE);

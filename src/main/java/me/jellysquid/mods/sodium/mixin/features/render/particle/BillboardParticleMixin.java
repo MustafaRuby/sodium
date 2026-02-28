@@ -22,19 +22,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(SingleQuadParticle.class)
 public abstract class BillboardParticleMixin extends Particle {
     @Shadow
-    public abstract float getSize(float tickDelta);
+    public abstract float getQuadSize(float tickDelta);
 
     @Shadow
-    protected abstract float getMinU();
+    protected abstract float getU0();
 
     @Shadow
-    protected abstract float getMaxU();
+    protected abstract float getU1();
 
     @Shadow
-    protected abstract float getMinV();
+    protected abstract float getV0();
 
     @Shadow
-    protected abstract float getMaxV();
+    protected abstract float getV1();
 
     protected BillboardParticleMixin(ClientLevel world, double x, double y, double z) {
         super(world, x, y, z);
@@ -44,8 +44,8 @@ public abstract class BillboardParticleMixin extends Particle {
      * @reason Optimize function
      * @author JellySquid
      */
-    @Inject(method = "buildGeometry", at = @At("HEAD"), cancellable = true)
-    public void buildGeometry(VertexConsumer vertexConsumer, Camera camera, float tickDelta, CallbackInfo ci) {
+    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    public void render(VertexConsumer vertexConsumer, Camera camera, float tickDelta, CallbackInfo ci) {
         final var writer = VertexConsumerUtils.convertOrLog(vertexConsumer);
 
         if (writer == null) {
@@ -54,32 +54,32 @@ public abstract class BillboardParticleMixin extends Particle {
 
         ci.cancel();
 
-        Vec3 vec3d = camera.getPos();
+        Vec3 vec3d = camera.getPosition();
 
-        float x = (float) (Mth.lerp(tickDelta, this.prevPosX, this.x) - vec3d.getX());
-        float y = (float) (Mth.lerp(tickDelta, this.prevPosY, this.y) - vec3d.getY());
-        float z = (float) (Mth.lerp(tickDelta, this.prevPosZ, this.z) - vec3d.getZ());
+        float x = (float) (Mth.lerp(tickDelta, this.xo, this.x) - vec3d.x());
+        float y = (float) (Mth.lerp(tickDelta, this.yo, this.y) - vec3d.y());
+        float z = (float) (Mth.lerp(tickDelta, this.zo, this.z) - vec3d.z());
 
         Quaternionf quaternion;
 
-        if (this.angle == 0.0F) {
-            quaternion = camera.getRotation();
+        if (this.roll == 0.0F) {
+            quaternion = camera.rotation();
         } else {
-            float angle = Mth.lerp(tickDelta, this.prevAngle, this.angle);
+            float angle = Mth.lerp(tickDelta, this.oRoll, this.roll);
 
-            quaternion = new Quaternionf(camera.getRotation());
+            quaternion = new Quaternionf(camera.rotation());
             quaternion.rotateZ(angle);
         }
 
-        float size = this.getSize(tickDelta);
-        int light = this.getShade(tickDelta);
+        float size = this.getQuadSize(tickDelta);
+        int light = this.getLightColor(tickDelta);
 
         float minU = this.getU0();
         float maxU = this.getU1();
         float minV = this.getV0();
         float maxV = this.getV1();
 
-        int color = ColorABGR.pack(this.red , this.green, this.blue, this.alpha);
+        int color = ColorABGR.pack(this.rCol , this.gCol, this.bCol, this.alpha);
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             long buffer = stack.nmalloc(4 * ParticleVertex.STRIDE);

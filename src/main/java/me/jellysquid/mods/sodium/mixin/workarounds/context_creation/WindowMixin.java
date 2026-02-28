@@ -5,9 +5,9 @@ import net.caffeinemc.mods.sodium.client.compatibility.checks.PostLaunchChecks;
 import net.caffeinemc.mods.sodium.client.compatibility.environment.GlContextInfo;
 import net.caffeinemc.mods.sodium.client.compatibility.workarounds.nvidia.NvidiaWorkarounds;
 import net.caffeinemc.mods.sodium.client.platform.NativeWindowHandle;
-import net.minecraft.client.WindowEventHandler;
-import net.minecraft.client.WindowSettings;
-import net.minecraft.client.renderer.VirtualScreen;
+import com.mojang.blaze3d.platform.WindowEventHandler;
+import com.mojang.blaze3d.platform.DisplayData;
+import com.mojang.blaze3d.platform.ScreenManager;
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.Util;
 import org.lwjgl.glfw.GLFW;
@@ -43,14 +43,14 @@ private static Logger LOGGER;
     }
 
     @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL;createCapabilities()Lorg/lwjgl/opengl/GLCapabilities;", shift = At.Shift.AFTER))
-    private void postWindowCreated(WindowEventHandler eventHandler, VirtualScreen monitorTracker, WindowSettings settings, String videoMode, String title, CallbackInfo ci) {
+    private void postWindowCreated(WindowEventHandler eventHandler, ScreenManager monitorTracker, DisplayData settings, String videoMode, String title, CallbackInfo ci) {
         GlContextInfo context = GlContextInfo.create();
         LOGGER.info("OpenGL Vendor: {}", context.vendor());
         LOGGER.info("OpenGL Renderer: {}", context.renderer());
         LOGGER.info("OpenGL Version: {}", context.version());
 
         // Capture the current WGL context so that we can detect it being replaced later.
-        if (Util.getOperatingSystem() == Util.OperatingSystem.WINDOWS) {
+        if (Util.getPlatform() == Util.OS.WINDOWS) {
             this.wglPrevContext = WGL.wglGetCurrentContext();
         } else {
             this.wglPrevContext = MemoryUtil.NULL;

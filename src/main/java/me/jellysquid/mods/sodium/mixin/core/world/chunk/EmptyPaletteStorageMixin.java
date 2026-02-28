@@ -22,7 +22,7 @@ public class EmptyPaletteStorageMixin implements PaletteStorageExtended {
             throw new IllegalArgumentException("Array has mismatched size");
         }
 
-        var defaultEntry = Objects.requireNonNull(palette.get(0), "Palette must have default entry");
+        var defaultEntry = Objects.requireNonNull(palette.valueFor(0), "Palette must have default entry");
         Arrays.fill(out, defaultEntry);
     }
 }

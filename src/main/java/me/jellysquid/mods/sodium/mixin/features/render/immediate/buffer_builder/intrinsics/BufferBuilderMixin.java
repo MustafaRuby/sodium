@@ -16,12 +16,12 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(BufferBuilder.class)
 public abstract class BufferBuilderMixin extends DefaultedVertexConsumer {
     @Shadow
-    private boolean canSkipElementChecks;
+    private boolean fastFormat;
 
     @Override
-    public void quad(PoseStack.Entry matrices, BakedQuad bakedQuad, float r, float g, float b, int light, int overlay) {
-        if (!this.canSkipElementChecks) {
-            super.quad(matrices, bakedQuad, r, g, b, light, overlay);
+    public void putBulkData(PoseStack.Pose matrices, BakedQuad bakedQuad, float r, float g, float b, int light, int overlay) {
+        if (!this.fastFormat) {
+            super.putBulkData(matrices, bakedQuad, r, g, b, light, overlay);
 
             if (bakedQuad.getSprite() != null) {
                 SpriteUtil.INSTANCE.markSpriteActive(bakedQuad.getSprite());
@@ -30,11 +30,11 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer {
             return;
         }
 
-        if (this.colorFixed) {
+        if (this.defaultColorSet) {
             throw new IllegalStateException();
         }
 
-        if (bakedQuad.getVertexData().length < 32) {
+        if (bakedQuad.getVertices().length < 32) {
             return; // we do not accept quads with less than 4 properly sized vertices
         }
 
@@ -51,9 +51,9 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer {
     }
 
     @Override
-    public void quad(PoseStack.Entry matrices, BakedQuad bakedQuad, float[] brightnessTable, float r, float g, float b, int[] light, int overlay, boolean colorize) {
-        if (!this.canSkipElementChecks) {
-            super.quad(matrices, bakedQuad, brightnessTable, r, g, b, light, overlay, colorize);
+    public void putBulkData(PoseStack.Pose matrices, BakedQuad bakedQuad, float[] brightnessTable, float r, float g, float b, int[] light, int overlay, boolean colorize) {
+        if (!this.fastFormat) {
+            super.putBulkData(matrices, bakedQuad, brightnessTable, r, g, b, light, overlay, colorize);
 
             if (bakedQuad.getSprite() != null) {
                 SpriteUtil.INSTANCE.markSpriteActive(bakedQuad.getSprite());
@@ -62,11 +62,11 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer {
             return;
         }
 
-        if (this.colorFixed) {
+        if (this.defaultColorSet) {
             throw new IllegalStateException();
         }
 
-        if (bakedQuad.getVertexData().length < 32) {
+        if (bakedQuad.getVertices().length < 32) {
             return; // we do not accept quads with less than 4 properly sized vertices
         }
 

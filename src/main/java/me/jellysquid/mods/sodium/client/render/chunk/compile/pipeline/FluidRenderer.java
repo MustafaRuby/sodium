@@ -71,7 +71,7 @@ public class FluidRenderer {
     private boolean isFluidOccluded(BlockAndTintGetter world, int x, int y, int z, Direction dir, Fluid fluid) {
         var adjPos = this.scratchPos.set(x + dir.getStepX(), y + dir.getStepY(), z + dir.getStepZ());
         BlockState blockState = world.getBlockState(adjPos);
-        if (blockState.getFluidState().getFluid().isSame(fluid)) {
+        if (blockState.getFluidState().getType().isSame(fluid)) {
             return true;
         }
         return blockState.canOcclude() && dir != Direction.UP && blockState.isFaceSturdy(world, adjPos, dir.getOpposite(), SupportType.FULL);
@@ -90,9 +90,9 @@ public class FluidRenderer {
                 return true;
             }
 
-            VoxelShape threshold = Shapes.cuboid(0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D);
+            VoxelShape threshold = Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, height, 1.0D);
 
-            return !Shapes.isSideCovered(threshold, shape, dir);
+            return !Shapes.blockOccudes(threshold, shape, dir);
         }
 
         return true;
@@ -110,7 +110,7 @@ public class FluidRenderer {
         int posY = blockPos.getY();
         int posZ = blockPos.getZ();
 
-        Fluid fluid = fluidState.getFluid();
+        Fluid fluid = fluidState.getType();
 
         boolean sfUp = this.isFluidOccluded(world, posX, posY, posZ, Direction.UP, fluid);
         boolean sfDown = this.isFluidOccluded(world, posX, posY, posZ, Direction.DOWN, fluid) ||
@@ -140,10 +140,10 @@ public class FluidRenderer {
             northEastHeight = 1.0f;
         } else {
             var scratchPos = new BlockPos.MutableBlockPos();
-            float heightNorth = this.fluidHeight(world, fluid, scratchPos.set(blockPos, Direction.NORTH), Direction.NORTH);
-            float heightSouth = this.fluidHeight(world, fluid, scratchPos.set(blockPos, Direction.SOUTH), Direction.SOUTH);
-            float heightEast = this.fluidHeight(world, fluid, scratchPos.set(blockPos, Direction.EAST), Direction.EAST);
-            float heightWest = this.fluidHeight(world, fluid, scratchPos.set(blockPos, Direction.WEST), Direction.WEST);
+            float heightNorth = this.fluidHeight(world, fluid, scratchPos.setWithOffset(blockPos, Direction.NORTH), Direction.NORTH);
+            float heightSouth = this.fluidHeight(world, fluid, scratchPos.setWithOffset(blockPos, Direction.SOUTH), Direction.SOUTH);
+            float heightEast = this.fluidHeight(world, fluid, scratchPos.setWithOffset(blockPos, Direction.EAST), Direction.EAST);
+            float heightWest = this.fluidHeight(world, fluid, scratchPos.setWithOffset(blockPos, Direction.WEST), Direction.WEST);
             northWestHeight = this.fluidCornerHeight(world, fluid, fluidHeight, heightNorth, heightWest, scratchPos.set(blockPos)
                     .move(Direction.NORTH)
                     .move(Direction.WEST));
@@ -209,7 +209,7 @@ public class FluidRenderer {
             float uAvg = (u1 + u2 + u3 + u4) / 4.0F;
             float vAvg = (v1 + v2 + v3 + v4) / 4.0F;
             float s1 = (float) sprites[0].contents().width() / (sprites[0].getU1() - sprites[0].getU0());
-            float s2 = (float) sprites[0].contents().getHeight() / (sprites[0].getV1() - sprites[0].getV0());
+            float s2 = (float) sprites[0].contents().height() / (sprites[0].getV1() - sprites[0].getV0());
             float s3 = 4.0F / Math.max(s2, s1);
 
             u1 = Mth.lerp(s3, u1, uAvg);
@@ -251,7 +251,7 @@ public class FluidRenderer {
             this.updateQuad(quad, world, blockPos, lighter, Direction.UP, 1.0F, colorProvider, fluidState);
             this.writeQuad(meshBuilder, material, offset, quad, facing, false);
 
-            if (fluidState.canFlowTo(world, this.scratchPos.set(posX, posY + 1, posZ))) {
+            if (fluidState.shouldRenderBackwardUpFace(world, this.scratchPos.set(posX, posY + 1, posZ))) {
                 this.writeQuad(meshBuilder, material, offset, quad,
                         ModelQuadFacing.NEG_Y, true);
 
@@ -350,9 +350,8 @@ public class FluidRenderer {
                     BlockPos adjPos = this.scratchPos.set(adjX, adjY, adjZ);
                     BlockState adjBlock = world.getBlockState(adjPos);
 
-                    // On Forge, check if the adjacent block is not a full opaque cube
-                    // to determine if we should render the overlay sprite
-                    if (!adjBlock.isSolidBlock(world, adjPos)) {
+                    // On Forge, check if the adjacent block wants to display the fluid overlay
+                    if (adjBlock.shouldDisplayFluidOverlay(world, adjPos, fluidState)) {
                         sprite = sprites[2];
                         isOverlay = true;
                     }
@@ -397,13 +396,13 @@ public class FluidRenderer {
     }
 
     private static TextureAtlasSprite[] getFluidSprites(IClientFluidTypeExtensions extensions, FluidState fluidState) {
-        ResourceLocation still = extensions.getStillTexture(fluidState);
-        ResourceLocation flowing = extensions.getFlowingTexture(fluidState);
-        ResourceLocation overlay = extensions.getOverlayTexture(fluidState);
+        ResourceLocation still = extensions.getStillTexture();
+        ResourceLocation flowing = extensions.getFlowingTexture();
+        ResourceLocation overlay = extensions.getOverlayTexture();
 
         TextureAtlas atlas = Minecraft.getInstance()
                 .getModelManager()
-                .getAtlas(TextureAtlas.BLOCK_ATLAS_TEXTURE);
+                .getAtlas(TextureAtlas.LOCATION_BLOCKS);
 
         TextureAtlasSprite stillSprite = atlas.getSprite(still);
         TextureAtlasSprite flowingSprite = atlas.getSprite(flowing);
@@ -503,13 +502,13 @@ public class FluidRenderer {
         BlockState blockState = world.getBlockState(blockPos);
         FluidState fluidState = blockState.getFluidState();
 
-        if (fluid.isSame(fluidState.getFluid())) {
-            FluidState fluidStateUp = world.getFluidState(blockPos.up());
+        if (fluid.isSame(fluidState.getType())) {
+            FluidState fluidStateUp = world.getFluidState(blockPos.above());
 
-            if (fluid.isSame(fluidStateUp.getFluid())) {
+            if (fluid.isSame(fluidStateUp.getType())) {
                 return 1.0f;
             } else {
-                return fluidState.getHeight();
+                return fluidState.getOwnHeight();
             }
         }
         if (!blockState.isSolid()) {

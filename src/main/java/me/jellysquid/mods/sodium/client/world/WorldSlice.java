@@ -51,7 +51,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     private static final int NEIGHBOR_BLOCK_RADIUS = 2;
 
     // The radius of chunks around the origin chunk that should be copied.
-    private static final int NEIGHBOR_CHUNK_RADIUS = Mth.roundUpToMultiple(NEIGHBOR_BLOCK_RADIUS, 16) >> 4;
+    private static final int NEIGHBOR_CHUNK_RADIUS = ((NEIGHBOR_BLOCK_RADIUS + 16 - 1) / 16);
 
     // The number of sections on each axis of this slice.
     private static final int SECTION_ARRAY_LENGTH = 1 + (NEIGHBOR_CHUNK_RADIUS * 2);
@@ -94,21 +94,21 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
 
     public static ChunkRenderContext prepare(Level world, SectionPos origin, ClonedChunkSectionCache sectionCache) {
         LevelChunk chunk = world.getChunk(origin.getX(), origin.getZ());
-        LevelChunkSection section = chunk.getSections()[world.getSectionIndexFromSectionY(origin.getY())];
+        LevelChunkSection section = chunk.getSections()[world.getSectionIndex(origin.getY())];
 
         // If the chunk section is absent or empty, simply terminate now. There will never be anything in this chunk
         // section to render, so we need to signal that a chunk render task shouldn't created. This saves a considerable
         // amount of time in queueing instant build tasks and greatly accelerates how quickly the world can be loaded.
-        if (section == null || section.isEmpty()) {
+        if (section == null || section.hasOnlyAir()) {
             return null;
         }
 
-        BoundingBox volume = new BoundingBox(origin.minX() - NEIGHBOR_BLOCK_RADIUS,
-                origin.minY() - NEIGHBOR_BLOCK_RADIUS,
-                origin.minZ() - NEIGHBOR_BLOCK_RADIUS,
-                origin.maxX() + NEIGHBOR_BLOCK_RADIUS,
-                origin.maxY() + NEIGHBOR_BLOCK_RADIUS,
-                origin.maxZ() + NEIGHBOR_BLOCK_RADIUS);
+        BoundingBox volume = new BoundingBox(origin.minBlockX() - NEIGHBOR_BLOCK_RADIUS,
+                origin.minBlockY() - NEIGHBOR_BLOCK_RADIUS,
+                origin.minBlockZ() - NEIGHBOR_BLOCK_RADIUS,
+                origin.maxBlockX() + NEIGHBOR_BLOCK_RADIUS,
+                origin.maxBlockY() + NEIGHBOR_BLOCK_RADIUS,
+                origin.maxBlockZ() + NEIGHBOR_BLOCK_RADIUS);
 
         // The min/max bounds of the chunks copied by this slice
         final int minChunkX = origin.getX() - NEIGHBOR_CHUNK_RADIUS;
@@ -144,7 +144,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
         this.blockEntityRenderDataArrays = new Int2ReferenceMap[SECTION_ARRAY_SIZE];
 
         this.biomeSlice = new BiomeSlice();
-        this.biomeColors = new BiomeColorCache(this.biomeSlice, Minecraft.getInstance().options.getBiomeBlendRadius().getValue());
+        this.biomeColors = new BiomeColorCache(this.biomeSlice, Minecraft.getInstance().options.biomeBlendRadius().get());
 
         for (BlockState[] blockArray : this.blockArrays) {
             Arrays.fill(blockArray, EMPTY_BLOCK_STATE);
@@ -199,14 +199,14 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
         } else {
             var bounds = context.getVolume();
 
-            int minBlockX = Math.max(bounds.minX(), pos.minX());
-            int maxBlockX = Math.min(bounds.maxX(), pos.maxX());
+            int minBlockX = Math.max(bounds.minX(), pos.minBlockX());
+            int maxBlockX = Math.min(bounds.maxX(), pos.maxBlockX());
 
-            int minBlockY = Math.max(bounds.minY(), pos.minY());
-            int maxBlockY = Math.min(bounds.maxY(), pos.maxY());
+            int minBlockY = Math.max(bounds.minY(), pos.minBlockY());
+            int maxBlockY = Math.min(bounds.maxY(), pos.maxBlockY());
 
-            int minBlockZ = Math.max(bounds.minZ(), pos.minZ());
-            int maxBlockZ = Math.min(bounds.maxZ(), pos.maxZ());
+            int minBlockZ = Math.max(bounds.minZ(), pos.minBlockZ());
+            int maxBlockZ = Math.min(bounds.maxZ(), pos.maxBlockZ());
 
             container.sodium$unpack(blockArray, minBlockX & 15, minBlockY & 15, minBlockZ & 15,
                     maxBlockX & 15, maxBlockY & 15, maxBlockZ & 15);
@@ -231,7 +231,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     }
 
     public BlockState getBlockState(int x, int y, int z) {
-        if (!this.volume.contains(x, y, z)) {
+        if (!this.volume.isInside(x, y, z)) {
             return EMPTY_BLOCK_STATE;
         }
 
@@ -250,19 +250,19 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     }
 
     @Override
-    public float getBrightness(Direction direction, boolean shaded) {
+    public float getShade(Direction direction, boolean shaded) {
         return this.world.getShade(direction, shaded);
     }
 
     @Override
-    public LevelLightEngine getLevelLightEngine() {
+    public LevelLightEngine getLightEngine() {
         // Not thread-safe to access lighting data from off-thread, even if Minecraft allows it.
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public int getLightLevel(LightLayer type, BlockPos pos) {
-        if (!this.volume.contains(pos.getX(), pos.getY(), pos.getZ())) {
+    public int getBrightness(LightLayer type, BlockPos pos) {
+        if (!this.volume.isInside(pos.getX(), pos.getY(), pos.getZ())) {
             return 0;
         }
 
@@ -281,8 +281,8 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     }
 
     @Override
-    public int getBaseLightLevel(BlockPos pos, int ambientDarkness) {
-        if (!this.volume.contains(pos.getX(), pos.getY(), pos.getZ())) {
+    public int getRawBrightness(BlockPos pos, int ambientDarkness) {
+        if (!this.volume.isInside(pos.getX(), pos.getY(), pos.getZ())) {
             return 0;
         }
 
@@ -311,7 +311,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     }
 
     public BlockEntity getBlockEntity(int x, int y, int z) {
-        if (!this.volume.contains(x, y, z)) {
+        if (!this.volume.isInside(x, y, z)) {
             return null;
         }
 
@@ -329,7 +329,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     }
 
     @Override
-    public int getColor(BlockPos pos, ColorResolver resolver) {
+    public int getBlockTint(BlockPos pos, ColorResolver resolver) {
         return this.biomeColors.getColor(resolver, pos.getX(), pos.getY(), pos.getZ());
     }
 
@@ -339,8 +339,8 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     }
 
     @Override
-    public int getBottomY() {
-        return this.world.getBottomY();
+    public int getMinBuildHeight() {
+        return this.world.getMinBuildHeight();
     }
 
     @Override
@@ -349,7 +349,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
     }
 
     public @Nullable Object getBlockEntityRenderData(BlockPos pos) {
-        if (!this.volume.contains(pos.getX(), pos.getY(), pos.getZ())) {
+        if (!this.volume.isInside(pos.getX(), pos.getY(), pos.getZ())) {
             return null;
         }
 

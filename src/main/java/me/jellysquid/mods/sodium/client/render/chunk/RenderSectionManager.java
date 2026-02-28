@@ -105,7 +105,7 @@ public class RenderSectionManager {
     }
 
     public void update(Camera camera, Viewport viewport, int frame, boolean spectator) {
-        this.lastCameraPosition = camera.getBlockPos();
+        this.lastCameraPosition = camera.getBlockPosition();
 
         this.createTerrainRenderList(camera, viewport, frame, spectator);
 
@@ -141,14 +141,14 @@ public class RenderSectionManager {
 
     private boolean shouldUseOcclusionCulling(Camera camera, boolean spectator) {
         final boolean useOcclusionCulling;
-        BlockPos origin = camera.getBlockPos();
+        BlockPos origin = camera.getBlockPosition();
 
         if (spectator && this.world.getBlockState(origin)
-                .isOpaqueFullCube(this.world, origin))
+                .isSolidRender(this.world, origin))
         {
             useOcclusionCulling = false;
         } else {
-            useOcclusionCulling = Minecraft.getInstance().chunkCullingEnabled;
+            useOcclusionCulling = Minecraft.getInstance().smartCull;
         }
         return useOcclusionCulling;
     }
@@ -175,10 +175,10 @@ public class RenderSectionManager {
 
         this.sectionByPosition.put(key, renderSection);
 
-        Chunk chunk = this.world.getChunk(x, z);
+        ChunkAccess chunk = this.world.getChunk(x, z);
         LevelChunkSection section = chunk.getSections()[this.world.getSectionIndexFromSectionY(y)];
 
-        if (section.isEmpty()) {
+        if (section.hasOnlyAir()) {
             this.updateSectionInfo(renderSection, BuiltSectionInfo.EMPTY);
         } else {
             renderSection.setPendingUpdate(ChunkUpdateType.INITIAL_BUILD);
@@ -475,7 +475,7 @@ public class RenderSectionManager {
         var renderDistance = this.getRenderDistance();
 
         // The fog must be fully opaque in order to skip rendering of chunks behind it
-        if (!Mth.approximatelyEquals(color[3], 1.0f)) {
+        if (!Mth.equal(color[3], 1.0f)) {
             return renderDistance;
         }
 
@@ -564,13 +564,13 @@ public class RenderSectionManager {
     }
 
     public void onChunkAdded(int x, int z) {
-        for (int y = this.world.getBottomSectionCoord(); y < this.world.getTopSectionCoord(); y++) {
+        for (int y = this.world.getMinSection(); y < this.world.getMaxSection(); y++) {
             this.onSectionAdded(x, y, z);
         }
     }
 
     public void onChunkRemoved(int x, int z) {
-        for (int y = this.world.getBottomSectionCoord(); y < this.world.getTopSectionCoord(); y++) {
+        for (int y = this.world.getMinSection(); y < this.world.getMaxSection(); y++) {
             this.onSectionRemoved(x, y, z);
         }
     }

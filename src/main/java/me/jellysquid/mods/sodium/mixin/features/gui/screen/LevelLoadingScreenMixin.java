@@ -1,6 +1,10 @@
 package me.jellysquid.mods.sodium.mixin.features.gui.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import net.caffeinemc.mods.sodium.api.vertex.format.common.ColorVertex;
@@ -8,7 +12,7 @@ import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.ChunkProgressListener;
+import net.minecraft.server.level.progress.StoringChunkProgressListener;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.renderer.*;
 
@@ -23,7 +27,7 @@ import org.spongepowered.asm.mixin.*;
  */
 @Mixin(LevelLoadingScreen.class)
 public class LevelLoadingScreenMixin {
-    @MutableBlockPos
+    @Mutable
     @Shadow
     @Final
     private static Object2IntMap<ChunkStatus> STATUS_TO_COLOR;
@@ -47,7 +51,7 @@ public class LevelLoadingScreenMixin {
      * @author JellySquid
      */
     @Overwrite
-    public static void drawChunkMap(GuiGraphics drawContext, ChunkProgressListener tracker, int mapX, int mapY, int mapScale, int mapPadding) {
+    public static void renderChunks(GuiGraphics drawContext, StoringChunkProgressListener tracker, int mapX, int mapY, int mapScale, int mapPadding) {
         if (STATUS_TO_COLOR_FAST == null) {
             STATUS_TO_COLOR_FAST = new Reference2IntOpenHashMap<>(STATUS_TO_COLOR.size());
             STATUS_TO_COLOR_FAST.put(null, NULL_STATUS_COLOR);
@@ -55,22 +59,22 @@ public class LevelLoadingScreenMixin {
                     .forEach(entry -> STATUS_TO_COLOR_FAST.put(entry.getKey(), ColorARGB.toABGR(entry.getIntValue(), 0xFF)));
         }
 
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
-        Matrix4f matrix = drawContext.getMatrices().peek().getPositionMatrix();
+        Matrix4f matrix = drawContext.pose().last().pose();
 
-        Tessellator tessellator = Tessellator.getInstance();
+        Tesselator tessellator = Tesselator.getInstance();
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder bufferBuilder = tessellator.getBuilder();
+        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         var writer = VertexBufferWriter.of(bufferBuilder);
 
-        int centerSize = tracker.getCenterSize();
-        int size = tracker.getSize();
+        int centerSize = tracker.getFullDiameter();
+        int size = tracker.getDiameter();
 
         int tileSize = mapScale + mapPadding;
 
@@ -97,7 +101,7 @@ public class LevelLoadingScreenMixin {
             for (int z = 0; z < size; ++z) {
                 int tileY = mapStartY + z * tileSize;
 
-                ChunkStatus status = tracker.getChunkStatus(x, z);
+                ChunkStatus status = tracker.getStatus(x, z);
                 int color;
 
                 if (prevStatus == status) {
@@ -113,7 +117,7 @@ public class LevelLoadingScreenMixin {
             }
         }
 
-        tessellator.draw();
+        tessellator.end();
 
         RenderSystem.disableBlend();
     }

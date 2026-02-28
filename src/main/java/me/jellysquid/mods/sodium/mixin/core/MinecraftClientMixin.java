@@ -79,14 +79,14 @@ public class MinecraftClientMixin {
      * Check for problematic core shader resource packs after the initial game launch.
      */
     @Inject(method = "onInitFinished", at = @At("TAIL"))
-    private void postInit(RealmsClient realms, ReloadInstance reload, RunArgs.QuickPlay quickPlay, CallbackInfo ci) {
+    private void postInit(RealmsClient realms, ReloadInstance reload, GameConfig.QuickPlayData quickPlay, CallbackInfo ci) {
         ResourcePackScanner.checkIfCoreShaderLoaded(this.resourceManager);
     }
 
     /**
      * Check for problematic core shader resource packs after every resource reload.
      */
-    @Inject(method = "reloadResources()Ljava/util/concurrent/CompletableFuture;", at = @At("TAIL"))
+    @Inject(method = "reloadResourcePacks()Ljava/util/concurrent/CompletableFuture;", at = @At("TAIL"))
     private void postResourceReload(CallbackInfoReturnable<CompletableFuture<Void>> cir) {
         ResourcePackScanner.checkIfCoreShaderLoaded(this.resourceManager);
     }

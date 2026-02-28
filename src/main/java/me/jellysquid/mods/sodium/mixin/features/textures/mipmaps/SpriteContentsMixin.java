@@ -17,7 +17,7 @@ import org.lwjgl.system.MemoryUtil;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.MutableBlockPos;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(SpriteContents.class)
 public class SpriteContentsMixin {
-    @MutableBlockPos
+    @Mutable
     @Shadow
     @Final
     private NativeImage image;
@@ -57,7 +57,7 @@ public class SpriteContentsMixin {
     @Unique
     private static void sodium$fillInTransparentPixelColors(NativeImage nativeImage) {
         final long ppPixel = NativeImageHelper.getPointerRGBA(nativeImage);
-        final int pixelCount = nativeImage.getHeight() * nativeImage.width();
+        final int pixelCount = nativeImage.getHeight() * nativeImage.getWidth();
 
         // Calculate an average color from all pixels that are not completely transparent.
         // This average is weighted based on the (non-zero) alpha value of the pixel.
@@ -71,16 +71,16 @@ public class SpriteContentsMixin {
             long pPixel = ppPixel + (pixelIndex * 4);
 
             int color = MemoryUtil.memGetInt(pPixel);
-            int alpha = ColorHelper.Abgr.getAlpha(color);
+            int alpha = FastColor.ABGR32.alpha(color);
 
             // Ignore all fully-transparent pixels for the purposes of computing an average color.
             if (alpha != 0) {
                 float weight = (float) alpha;
 
                 // Make sure to convert to linear space so that we don't lose brightness.
-                r += ColorSRGB.srgbToLinear(ColorHelper.Abgr.getRed(color)) * weight;
-                g += ColorSRGB.srgbToLinear(ColorHelper.Abgr.getGreen(color)) * weight;
-                b += ColorSRGB.srgbToLinear(ColorHelper.Abgr.getBlue(color)) * weight;
+                r += ColorSRGB.srgbToLinear(FastColor.ABGR32.red(color)) * weight;
+                g += ColorSRGB.srgbToLinear(FastColor.ABGR32.green(color)) * weight;
+                b += ColorSRGB.srgbToLinear(FastColor.ABGR32.blue(color)) * weight;
 
                 totalWeight += weight;
             }
@@ -103,7 +103,7 @@ public class SpriteContentsMixin {
             long pPixel = ppPixel + (pixelIndex * 4);
 
             int color = MemoryUtil.memGetInt(pPixel);
-            int alpha = ColorHelper.Abgr.getAlpha(color);
+            int alpha = FastColor.ABGR32.alpha(color);
 
             // Replace the color values of pixels which are fully transparent, since they have no color data.
             if (alpha == 0) {

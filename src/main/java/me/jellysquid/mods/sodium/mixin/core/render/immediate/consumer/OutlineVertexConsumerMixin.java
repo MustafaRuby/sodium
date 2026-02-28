@@ -38,7 +38,7 @@ public abstract class OutlineVertexConsumerMixin extends DefaultedVertexConsumer
     @Override
     public void push(MemoryStack stack, long ptr, int count, VertexFormatDescription format) {
         transform(ptr, count, format,
-                ColorABGR.pack(this.fixedRed, this.fixedGreen, this.fixedBlue, this.fixedAlpha));
+                ColorABGR.pack(this.defaultR, this.defaultG, this.defaultB, this.defaultA));
 
         VertexBufferWriter.of(this.delegate)
                 .push(stack, ptr, count, format);

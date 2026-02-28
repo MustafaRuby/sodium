@@ -39,22 +39,22 @@ public class BiomeColorCache {
     }
 
     public void update(ChunkRenderContext context) {
-        this.minX = (context.getOrigin().minX() - NEIGHBOR_BLOCK_RADIUS) - this.blendRadius;
-        this.minY = (context.getOrigin().minY() - NEIGHBOR_BLOCK_RADIUS);
-        this.minZ = (context.getOrigin().minZ() - NEIGHBOR_BLOCK_RADIUS) - this.blendRadius;
+        this.minX = (context.getOrigin().minBlockX() - NEIGHBOR_BLOCK_RADIUS) - this.blendRadius;
+        this.minY = (context.getOrigin().minBlockY() - NEIGHBOR_BLOCK_RADIUS);
+        this.minZ = (context.getOrigin().minBlockZ() - NEIGHBOR_BLOCK_RADIUS) - this.blendRadius;
 
-        this.maxX = (context.getOrigin().maxX() + NEIGHBOR_BLOCK_RADIUS) + this.blendRadius;
-        this.maxY = (context.getOrigin().maxY() + NEIGHBOR_BLOCK_RADIUS);
-        this.maxZ = (context.getOrigin().maxZ() + NEIGHBOR_BLOCK_RADIUS) + this.blendRadius;
+        this.maxX = (context.getOrigin().maxBlockX() + NEIGHBOR_BLOCK_RADIUS) + this.blendRadius;
+        this.maxY = (context.getOrigin().maxBlockY() + NEIGHBOR_BLOCK_RADIUS);
+        this.maxZ = (context.getOrigin().maxBlockZ() + NEIGHBOR_BLOCK_RADIUS) + this.blendRadius;
 
         this.populateStamp++;
     }
 
     public int getColor(BiomeColorSource source, int blockX, int blockY, int blockZ) {
         return switch (source) {
-            case GRASS -> getColor(BiomeColors.GRASS_COLOR, blockX, blockY, blockZ);
-            case FOLIAGE -> getColor(BiomeColors.FOLIAGE_COLOR, blockX, blockY, blockZ);
-            case WATER -> getColor(BiomeColors.WATER_COLOR, blockX, blockY, blockZ);
+            case GRASS -> getColor(BiomeColors.GRASS_COLOR_RESOLVER, blockX, blockY, blockZ);
+            case FOLIAGE -> getColor(BiomeColors.FOLIAGE_COLOR_RESOLVER, blockX, blockY, blockZ);
+            case WATER -> getColor(BiomeColors.WATER_COLOR_RESOLVER, blockX, blockY, blockZ);
         };
     }
 

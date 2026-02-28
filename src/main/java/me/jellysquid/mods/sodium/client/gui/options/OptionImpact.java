@@ -12,7 +12,7 @@ public enum OptionImpact implements TextProvider {
     private final Component text;
 
     OptionImpact(ChatFormatting color, String text) {
-        this.text = Component.translatable(text).formatted(color);
+        this.text = Component.translatable(text).withStyle(color);
     }
 
     @Override

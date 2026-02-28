@@ -26,7 +26,7 @@ import java.util.Map;
 public class ClonedChunkSection {
     private static final DataLayer DEFAULT_SKY_LIGHT_ARRAY = new DataLayer(15);
     private static final DataLayer DEFAULT_BLOCK_LIGHT_ARRAY = new DataLayer(0);
-    private static final PalettedContainer<BlockState> DEFAULT_STATE_CONTAINER = new PalettedContainer<>(Block.STATE_IDS, Blocks.AIR.defaultBlockState(), PalettedContainer.PalettedContainer.Strategy.BLOCK_STATE);
+    private static final PalettedContainer<BlockState> DEFAULT_STATE_CONTAINER = new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(), PalettedContainer.Strategy.SECTION_STATES);
 
     private final SectionPos pos;
 
@@ -51,9 +51,9 @@ public class ClonedChunkSection {
         Int2ReferenceMap<Object> blockEntityRenderDataMap = null;
 
         if (section != null) {
-            if (!section.isEmpty()) {
-                if (!world.isDebugWorld()) {
-                    blockData = ReadableContainerExtended.clone(section.getBlockStateContainer());
+            if (!section.hasOnlyAir()) {
+                if (!world.isDebug()) {
+                    blockData = ReadableContainerExtended.clone(section.getStates());
                 } else {
                     blockData = constructDebugWorldContainer(pos);
                 }
@@ -64,7 +64,7 @@ public class ClonedChunkSection {
                 }
             }
 
-            biomeData = ReadableContainerExtended.clone(section.getBiomeContainer());
+            biomeData = ReadableContainerExtended.clone(section.getBiomes());
         }
 
         this.blockData = blockData;
@@ -87,20 +87,20 @@ public class ClonedChunkSection {
             return DEFAULT_STATE_CONTAINER;
 
         // We use swapUnsafe in the loops to avoid acquiring/releasing the lock on each iteration
-        var container = new PalettedContainer<>(Block.STATE_IDS, Blocks.AIR.defaultBlockState(), PalettedContainer.PalettedContainer.Strategy.BLOCK_STATE);
+        var container = new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(), PalettedContainer.Strategy.SECTION_STATES);
         if (pos.getY() == 3) {
             // Set the blocks at relative Y 12 (world Y 60) to barriers
             BlockState barrier = Blocks.BARRIER.defaultBlockState();
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
-                    container.swapUnsafe(x, 12, z, barrier);
+                    container.getAndSetUnchecked(x, 12, z, barrier);
                 }
             }
         } else if (pos.getY() == 4) {
             // Set the blocks at relative Y 6 (world Y 70) to the appropriate state from the generator
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
-                    container.swapUnsafe(x, 6, z, DebugChunkGenerator.getBlockState(SectionPos.getOffsetPos(pos.getX(), x), SectionPos.getOffsetPos(pos.getZ(), z)));
+                    container.getAndSetUnchecked(x, 6, z, DebugLevelSource.getBlockStateFor(SectionPos.sectionToBlockCoord(pos.getX(), x), SectionPos.sectionToBlockCoord(pos.getZ(), z)));
                 }
             }
         }
@@ -113,7 +113,7 @@ public class ClonedChunkSection {
         arrays[LightLayer.BLOCK.ordinal()] = copyLightArray(world, LightLayer.BLOCK, pos);
 
         // Dimensions without sky-light should not have a default-initialized array
-        if (world.getDimension().hasSkyLight()) {
+        if (world.dimensionType().hasSkyLight()) {
             arrays[LightLayer.SKY.ordinal()] = copyLightArray(world, LightLayer.SKY, pos);
         }
 
@@ -126,9 +126,9 @@ public class ClonedChunkSection {
      */
     @NotNull
     private static DataLayer copyLightArray(Level world, LightLayer type, SectionPos pos) {
-        var array = world.getLevelLightEngine()
-                .get(type)
-                .getLightSection(pos);
+        var array = world.getLightEngine()
+                .getLayerListener(type)
+                .getDataLayerData(pos);
 
         if (array == null) {
             array = switch (type) {
@@ -142,8 +142,8 @@ public class ClonedChunkSection {
 
     @Nullable
     private static Int2ReferenceMap<BlockEntity> copyBlockEntities(LevelChunk chunk, SectionPos chunkCoord) {
-        BoundingBox box = new BoundingBox(chunkCoord.minX(), chunkCoord.minY(), chunkCoord.minZ(),
-                chunkCoord.maxX(), chunkCoord.maxY(), chunkCoord.maxZ());
+        BoundingBox box = new BoundingBox(chunkCoord.minBlockX(), chunkCoord.minBlockY(), chunkCoord.minBlockZ(),
+                chunkCoord.maxBlockX(), chunkCoord.maxBlockY(), chunkCoord.maxBlockZ());
 
         Int2ReferenceOpenHashMap<BlockEntity> blockEntities = null;
 
@@ -152,7 +152,7 @@ public class ClonedChunkSection {
             BlockPos pos = entry.getKey();
             BlockEntity entity = entry.getValue();
 
-            if (box.contains(pos)) {
+            if (box.isInside(pos)) {
                 if (blockEntities == null) {
                     blockEntities = new Int2ReferenceOpenHashMap<>();
                 }
@@ -177,7 +177,7 @@ public class ClonedChunkSection {
         // were iterating over any data in that chunk.
         // See https://github.com/CaffeineMC/sodium-fabric/issues/942 for more info.
         for (var entry : Int2ReferenceMaps.fastIterable(blockEntities)) {
-            Object data = entry.getValue().getRenderData();
+            Object data = entry.getValue().getModelData();
 
             if (data != null) {
                 if (blockEntityRenderDataMap == null) {

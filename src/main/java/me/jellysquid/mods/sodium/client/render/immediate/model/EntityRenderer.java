@@ -87,17 +87,17 @@ public class EntityRenderer {
             return;
         }
 
-        matrixStack.push();
+        matrixStack.pushPose();
 
-        part.rotate(matrixStack);
+        part.translateAndRotate(matrixStack);
 
         if (!accessor.isHidden()) {
-            renderCuboids(matrixStack.peek(), writer, cuboids, light, overlay, color);
+            renderCuboids(matrixStack.last(), writer, cuboids, light, overlay, color);
         }
 
         renderChildren(matrixStack, writer, light, overlay, color, children);
 
-        matrixStack.pop();
+        matrixStack.popPose();
     }
 
     private static void renderChildren(PoseStack matrices, VertexBufferWriter writer, int light, int overlay, int color, ModelPart[] children) {
@@ -106,13 +106,13 @@ public class EntityRenderer {
         }
     }
 
-    public static void renderCuboids(PoseStack.Entry matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {
+    public static void renderCuboids(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid[] cuboids, int light, int overlay, int color) {
         for (var cuboid : cuboids) {
             renderCuboid(matrices, writer, cuboid, light, overlay, color);
         }
     }
 
-    public static void renderCuboid(PoseStack.Entry matrices, VertexBufferWriter writer, ModelCuboid cuboid, int light, int overlay, int color) {
+    public static void renderCuboid(PoseStack.Pose matrices, VertexBufferWriter writer, ModelCuboid cuboid, int light, int overlay, int color) {
         prepareNormalsIfChanged(matrices);
         prepareVertices(matrices, cuboid);
 
@@ -162,15 +162,15 @@ public class EntityRenderer {
         ModelVertex.write(ptr, pos.x, pos.y, pos.z, color, tex.x, tex.y, overlay, light, normal);
     }
 
-    private static void prepareVertices(PoseStack.Entry matrices, ModelCuboid cuboid) {
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y1_Z1], cuboid.x1, cuboid.y1, cuboid.z1, matrices.getPositionMatrix());
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y1_Z1], cuboid.x2, cuboid.y1, cuboid.z1, matrices.getPositionMatrix());
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y2_Z1], cuboid.x2, cuboid.y2, cuboid.z1, matrices.getPositionMatrix());
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y2_Z1], cuboid.x1, cuboid.y2, cuboid.z1, matrices.getPositionMatrix());
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y1_Z2], cuboid.x1, cuboid.y1, cuboid.z2, matrices.getPositionMatrix());
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y1_Z2], cuboid.x2, cuboid.y1, cuboid.z2, matrices.getPositionMatrix());
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y2_Z2], cuboid.x2, cuboid.y2, cuboid.z2, matrices.getPositionMatrix());
-        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y2_Z2], cuboid.x1, cuboid.y2, cuboid.z2, matrices.getPositionMatrix());
+    private static void prepareVertices(PoseStack.Pose matrices, ModelCuboid cuboid) {
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y1_Z1], cuboid.x1, cuboid.y1, cuboid.z1, matrices.pose());
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y1_Z1], cuboid.x2, cuboid.y1, cuboid.z1, matrices.pose());
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y2_Z1], cuboid.x2, cuboid.y2, cuboid.z1, matrices.pose());
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y2_Z1], cuboid.x1, cuboid.y2, cuboid.z1, matrices.pose());
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y1_Z2], cuboid.x1, cuboid.y1, cuboid.z2, matrices.pose());
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y1_Z2], cuboid.x2, cuboid.y1, cuboid.z2, matrices.pose());
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X2_Y2_Z2], cuboid.x2, cuboid.y2, cuboid.z2, matrices.pose());
+        buildVertexPosition(CUBE_CORNERS[VERTEX_X1_Y2_Z2], cuboid.x1, cuboid.y2, cuboid.z2, matrices.pose());
 
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_NEG_Y], cuboid.u1, cuboid.v0, cuboid.u2, cuboid.v1);
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_Y], cuboid.u2, cuboid.v1, cuboid.u3, cuboid.v0);
@@ -180,16 +180,16 @@ public class EntityRenderer {
         buildVertexTexCoord(VERTEX_TEXTURES[FACE_POS_X], cuboid.u0, cuboid.v1, cuboid.u1, cuboid.v2);
     }
 
-    public static void prepareNormalsIfChanged(PoseStack.Entry matrices) {
-        if (!matrices.getNormalMatrix().equals(lastNormalMatrix)) {
-            lastNormalMatrix.set(matrices.getNormalMatrix());
+    public static void prepareNormalsIfChanged(PoseStack.Pose matrices) {
+        if (!matrices.normal().equals(lastNormalMatrix)) {
+            lastNormalMatrix.set(matrices.normal());
 
-            CUBE_NORMALS[FACE_NEG_Y] = MatrixHelper.transformNormal(matrices.getNormalMatrix(), true, Direction.DOWN);
-            CUBE_NORMALS[FACE_POS_Y] = MatrixHelper.transformNormal(matrices.getNormalMatrix(), true, Direction.UP);
-            CUBE_NORMALS[FACE_NEG_Z] = MatrixHelper.transformNormal(matrices.getNormalMatrix(), true, Direction.NORTH);
-            CUBE_NORMALS[FACE_POS_Z] = MatrixHelper.transformNormal(matrices.getNormalMatrix(), true, Direction.SOUTH);
-            CUBE_NORMALS[FACE_POS_X] = MatrixHelper.transformNormal(matrices.getNormalMatrix(), true, Direction.WEST);
-            CUBE_NORMALS[FACE_NEG_X] = MatrixHelper.transformNormal(matrices.getNormalMatrix(), true, Direction.EAST);
+            CUBE_NORMALS[FACE_NEG_Y] = MatrixHelper.transformNormal(matrices.normal(), true, Direction.DOWN);
+            CUBE_NORMALS[FACE_POS_Y] = MatrixHelper.transformNormal(matrices.normal(), true, Direction.UP);
+            CUBE_NORMALS[FACE_NEG_Z] = MatrixHelper.transformNormal(matrices.normal(), true, Direction.NORTH);
+            CUBE_NORMALS[FACE_POS_Z] = MatrixHelper.transformNormal(matrices.normal(), true, Direction.SOUTH);
+            CUBE_NORMALS[FACE_POS_X] = MatrixHelper.transformNormal(matrices.normal(), true, Direction.WEST);
+            CUBE_NORMALS[FACE_NEG_X] = MatrixHelper.transformNormal(matrices.normal(), true, Direction.EAST);
 
             // When mirroring is used, the normals for EAST and WEST are swapped.
             CUBE_NORMALS_MIRRORED[FACE_NEG_Y] = CUBE_NORMALS[FACE_NEG_Y];

@@ -7,19 +7,19 @@ import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.world.level.material.Fluid;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.MutableBlockPos;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Map;
 
 @Mixin(ItemBlockRenderTypes.class)
 public class RenderLayersMixin {
-    @MutableBlockPos
+    @Mutable
     @Shadow
     @Final
     private static Map<Block, RenderType> BLOCKS;
 
-    @MutableBlockPos
+    @Mutable
     @Shadow
     @Final
     private static Map<Fluid, RenderType> FLUIDS;

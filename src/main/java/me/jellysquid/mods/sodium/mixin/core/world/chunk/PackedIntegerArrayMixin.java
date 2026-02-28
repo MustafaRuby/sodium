@@ -39,7 +39,7 @@ public class PackedIntegerArrayMixin implements PaletteStorageExtended {
             long l = word;
 
             for (int j = 0; j < this.elementsPerLong; ++j) {
-                out[idx] = Objects.requireNonNull(palette.get((int) (l & this.maxValue)),
+                out[idx] = Objects.requireNonNull(palette.valueFor((int) (l & this.maxValue)),
                         "Palette does not contain entry for value in storage");
                 l >>= this.elementBits;
 

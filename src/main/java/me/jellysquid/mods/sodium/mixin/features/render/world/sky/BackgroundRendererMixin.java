@@ -13,12 +13,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(FogRenderer.class)
 public class BackgroundRendererMixin {
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/CubicSampler;sampleColor(Lnet/minecraft/util/math/Vec3;Lnet/minecraft/util/CubicSampler$RgbFetcher;)Lnet/minecraft/util/math/Vec3;"))
-    private static Vec3 redirectSampleColor(Vec3 pos, CubicSampler.RgbFetcher rgbFetcher, Camera camera, float tickDelta, ClientLevel world, int i, float f) {
-        float u = Mth.clamp(Mth.cos(world.getSkyAngle(tickDelta) * 6.2831855F) * 2.0F + 0.5F, 0.0F, 1.0F);
+    @Redirect(method = "setupColor", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/CubicSampler;gaussianSampleVec3(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;"))
+    private static Vec3 redirectSampleColor(Vec3 pos, CubicSampler.Vec3Fetcher rgbFetcher, Camera camera, float tickDelta, ClientLevel world, int i, float f) {
+        float u = Mth.clamp(Mth.cos(world.getTimeOfDay(tickDelta) * 6.2831855F) * 2.0F + 0.5F, 0.0F, 1.0F);
 
         return FastCubicSampler.sampleColor(pos,
-                (x, y, z) -> world.getBiomeAccess().getBiomeForNoiseGen(x, y, z).value().getFogColor(),
-                (v) -> world.getDimensionEffects().adjustFogColor(v, u));
+                (x, y, z) -> world.getBiomeManager().getNoiseBiomeAtQuart(x, y, z).value().getFogColor(),
+                (v) -> world.effects().getBrightnessDependentFogColor(v, u));
     }
 }

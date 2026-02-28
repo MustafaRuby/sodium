@@ -63,12 +63,12 @@ public abstract class LightDataAccess {
 
         BlockState state = world.getBlockState(pos);
 
-        boolean em = state.hasEmissiveLighting(world, pos);
-        boolean op = state.shouldBlockVision(world, pos) && state.getOpacity(world, pos) != 0;
-        boolean fo = state.isOpaqueFullCube(world, pos);
-        boolean fc = state.isFullCube(world, pos);
+        boolean em = state.emissiveRendering(world, pos);
+        boolean op = state.isSuffocating(world, pos) && state.getLightBlock(world, pos) != 0;
+        boolean fo = state.isSolidRender(world, pos);
+        boolean fc = state.isCollisionShapeFullBlock(world, pos);
 
-        int lu = state.getLuminance();
+        int lu = state.getLightEmission();
 
         // OPTIMIZE: Do not calculate light data if the block is full and opaque and does not emit light.
         int bl;
@@ -77,14 +77,14 @@ public abstract class LightDataAccess {
             bl = 0;
             sl = 0;
         } else {
-            bl = world.getLightLevel(LightLayer.BLOCK, pos);
-            sl = world.getLightLevel(LightLayer.SKY, pos);
+            bl = world.getBrightness(LightLayer.BLOCK, pos);
+            sl = world.getBrightness(LightLayer.SKY, pos);
         }
 
         // FIX: Do not apply AO from blocks that emit light
         float ao;
         if (lu == 0) {
-            ao = state.getAmbientOcclusionLightLevel(world, pos);
+            ao = state.getShadeBrightness(world, pos);
         } else {
             ao = 1.0f;
         }
@@ -178,7 +178,7 @@ public abstract class LightDataAccess {
      */
     public static int getEmissiveLightmap(int word) {
         if (unpackEM(word)) {
-            return LightTexture.MAX_LIGHT_COORDINATE;
+            return LightTexture.FULL_BRIGHT;
         } else {
             return getLightmap(word);
         }

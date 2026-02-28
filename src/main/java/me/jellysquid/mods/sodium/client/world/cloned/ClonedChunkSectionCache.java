@@ -61,11 +61,11 @@ public class ClonedChunkSectionCache {
 
         @Nullable LevelChunkSection section = null;
 
-        if (!this.world.isOutOfHeightLimit(SectionPos.getBlockCoord(y))) {
-            section = chunk.getSections()[this.world.getSectionIndexFromSectionY(y)];
+        if (!this.world.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y))) {
+            section = chunk.getSections()[this.world.getSectionIndex(y)];
         }
 
-        return new ClonedChunkSection(this.world, chunk, section, SectionPos.from(x, y, z));
+        return new ClonedChunkSection(this.world, chunk, section, SectionPos.of(x, y, z));
     }
 
     public void invalidate(int x, int y, int z) {

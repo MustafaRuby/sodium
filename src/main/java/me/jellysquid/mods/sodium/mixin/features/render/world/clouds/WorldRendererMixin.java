@@ -16,13 +16,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderer.class)
 public class WorldRendererMixin {
     @Shadow
-    private @Nullable ClientLevel world;
+    private @Nullable ClientLevel level;
     @Shadow
     private int ticks;
 
     @Shadow
     @Final
-    private Minecraft client;
+    private Minecraft minecraft;
 
     @Unique
     private CloudRenderer cloudRenderer;
@@ -34,20 +34,20 @@ public class WorldRendererMixin {
     @Overwrite
     public void renderClouds(PoseStack matrices, Matrix4f projectionMatrix, float tickDelta, double x, double y, double z) {
         if (this.cloudRenderer == null) {
-            this.cloudRenderer = new CloudRenderer(this.client.getResourceManager());
+            this.cloudRenderer = new CloudRenderer(this.minecraft.getResourceManager());
         }
 
-        this.cloudRenderer.render(this.world, this.client.player, matrices, projectionMatrix, this.ticks, tickDelta, x, y, z);
+        this.cloudRenderer.render(this.level, this.minecraft.player, matrices, projectionMatrix, this.ticks, tickDelta, x, y, z);
     }
 
-    @Inject(method = "reload(Lnet/minecraft/resource/ResourceManager;)V", at = @At("RETURN"))
+    @Inject(method = "onResourceManagerReload(Lnet/minecraft/server/packs/resources/ResourceManager;)V", at = @At("RETURN"))
     private void onReload(ResourceManager manager, CallbackInfo ci) {
         if (this.cloudRenderer != null) {
             this.cloudRenderer.reloadTextures(manager);
         }
     }
 
-    @Inject(method = "reload()V", at = @At("RETURN"))
+    @Inject(method = "allChanged", at = @At("RETURN"))
     private void onReload(CallbackInfo ci) {
         // will be re-allocated on next use
         if (this.cloudRenderer != null) {

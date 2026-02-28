@@ -16,13 +16,13 @@ public final class Viewport {
         this.frustum = frustum;
         this.transform = new CameraTransform(position.x, position.y, position.z);
 
-        this.chunkCoords = SectionPos.from(
-                SectionPos.getSectionCoord(position.x),
-                SectionPos.getSectionCoord(position.y),
-                SectionPos.getSectionCoord(position.z)
+        this.chunkCoords = SectionPos.of(
+                SectionPos.posToSectionCoord(position.x),
+                SectionPos.posToSectionCoord(position.y),
+                SectionPos.posToSectionCoord(position.z)
         );
 
-        this.blockCoords = BlockPos.ofFloored(position.x, position.y, position.z);
+        this.blockCoords = BlockPos.containing(position.x, position.y, position.z);
     }
 
     public boolean isBoxVisible(int intOriginX, int intOriginY, int intOriginZ, float floatSizeX, float floatSizeY, float floatSizeZ) {

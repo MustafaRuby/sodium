@@ -24,31 +24,31 @@ import java.util.function.Consumer;
 public class ClientChunkManagerMixin {
     @Shadow
     @Final
-    ClientLevel world;
+    ClientLevel level;
 
     @Inject(
-            method = "unload",
+            method = "drop",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/world/ClientChunkCache$ClientChunkMap;compareAndSet(ILnet/minecraft/world/chunk/LevelChunk;Lnet/minecraft/world/chunk/LevelChunk;)Lnet/minecraft/world/chunk/LevelChunk;",
+                    target = "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;replace(ILnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/world/level/chunk/LevelChunk;",
                     shift = At.Shift.AFTER
             )
     )
     private void onChunkUnloaded(int chunkX, int chunkZ, CallbackInfo ci) {
-        ChunkTrackerHolder.get(this.world)
+        ChunkTrackerHolder.get(this.level)
                 .onChunkStatusRemoved(chunkX, chunkZ, ChunkStatus.FLAG_HAS_BLOCK_DATA);
     }
 
     @Inject(
-            method = "loadChunkFromPacket",
+            method = "replaceWithPacketData",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/world/ClientLevel;resetChunkColor(Lnet/minecraft/util/math/ChunkPos;)V",
+                    target = "Lnet/minecraft/client/multiplayer/ClientLevel;onChunkLoaded(Lnet/minecraft/world/level/ChunkPos;)V",
                     shift = At.Shift.AFTER
             )
     )
-    private void onChunkLoaded(int chunkX, int chunkZ, FriendlyByteBuf buf, CompoundTag nbt, Consumer<ChunkData.BlockEntityVisitor> consumer, CallbackInfoReturnable<@Nullable LevelChunk> cir) {
-        ChunkTrackerHolder.get(this.world)
+    private void onChunkLoaded(int chunkX, int chunkZ, FriendlyByteBuf buf, CompoundTag nbt, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer, CallbackInfoReturnable<@Nullable LevelChunk> cir) {
+        ChunkTrackerHolder.get(this.level)
                 .onChunkStatusAdded(chunkX, chunkZ, ChunkStatus.FLAG_HAS_BLOCK_DATA);
     }
 }

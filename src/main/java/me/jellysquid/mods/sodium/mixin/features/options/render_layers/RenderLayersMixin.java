@@ -16,13 +16,13 @@ public class RenderLayersMixin {
     private static boolean leavesFancy;
 
     @Redirect(
-            method = { "getBlockLayer", "getMovingBlockLayer" },
-            at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/ItemBlockRenderTypes;fancyGraphicsOrBetter:Z"))
+            method = { "getChunkRenderType", "getMovingBlockRenderType" },
+            at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;fancyGraphicsOrBetter:Z"))
     private static boolean redirectLeavesShouldBeFancy() {
         return leavesFancy;
     }
 
-    @Inject(method = "setFancyGraphicsOrBetter", at = @At("RETURN"))
+    @Inject(method = "setFancy", at = @At("RETURN"))
     private static void onSetFancyGraphicsOrBetter(boolean fancyGraphicsOrBetter, CallbackInfo ci) {
         leavesFancy = SodiumClientMod.options().quality.leavesQuality.isFancy(fancyGraphicsOrBetter ? GraphicsStatus.FANCY : GraphicsStatus.FAST);
     }

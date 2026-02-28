@@ -10,7 +10,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public final class GlyphVertex  {
     public static final VertexFormatDescription FORMAT = VertexFormatRegistry.instance()
-            .get(DefaultVertexFormat.POSITION_COLOR_TEXTURE_LIGHT);
+            .get(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP);
 
     public static final int STRIDE = 28;
 

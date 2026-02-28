@@ -23,14 +23,14 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class BlockRenderer {
-    private final RandomSource random = new LocalRandom(42L);
+    private final RandomSource random = new SingleThreadedRandomSource(42L);
 
     private final ColorProviderRegistry colorProviderRegistry;
     private final BlockOcclusionCache occlusionCache;
@@ -62,8 +62,8 @@ public class BlockRenderer {
         LightPipeline lighter = this.lighters.getLighter(this.getLightingMode(ctx.state(), ctx.model()));
         Vec3 renderOffset;
         
-        if (ctx.state().hasModelOffset()) {
-            renderOffset = ctx.state().getModelOffset(ctx.world(), ctx.pos());
+        if (ctx.state().hasOffsetFunction()) {
+            renderOffset = ctx.state().getOffset(ctx.world(), ctx.pos());
         } else {
             renderOffset = Vec3.ZERO;
         }
@@ -151,9 +151,9 @@ public class BlockRenderer {
             int srcIndex = orientation.getVertexIndex(dstIndex);
 
             var out = vertices[dstIndex];
-            out.x = ctx.origin().x() + quad.getX(srcIndex) + (float) offset.getX();
-            out.y = ctx.origin().y() + quad.getY(srcIndex) + (float) offset.getY();
-            out.z = ctx.origin().z() + quad.getZ(srcIndex) + (float) offset.getZ();
+            out.x = ctx.origin().x() + quad.getX(srcIndex) + (float) offset.x();
+            out.y = ctx.origin().y() + quad.getY(srcIndex) + (float) offset.y();
+            out.z = ctx.origin().z() + quad.getZ(srcIndex) + (float) offset.z();
 
             out.color = ColorABGR.withAlpha(colors != null ? colors[srcIndex] : 0xFFFFFFFF, light.br[srcIndex]);
 
@@ -168,7 +168,7 @@ public class BlockRenderer {
     }
 
     private LightMode getLightingMode(BlockState state, BakedModel model) {
-        if (this.useAmbientOcclusion && model.useAmbientOcclusion() && state.getLuminance() == 0) {
+        if (this.useAmbientOcclusion && model.useAmbientOcclusion() && state.getLightEmission() == 0) {
             return LightMode.SMOOTH;
         } else {
             return LightMode.FLAT;

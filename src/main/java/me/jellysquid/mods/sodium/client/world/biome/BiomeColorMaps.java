@@ -11,19 +11,19 @@ public class BiomeColorMaps {
     private static final int DEFAULT_COLOR = 0xffff00ff;
 
     public static int getGrassColor(int index) {
-        if (index == INVALID_INDEX || index >= GrassColor.colorMap.length) {
+        if (index == INVALID_INDEX || index >= GrassColor.pixels.length) {
             return DEFAULT_COLOR;
         }
 
-        return GrassColor.colorMap[index];
+        return GrassColor.pixels[index];
     }
 
     public static int getFoliageColor(int index) {
-        if (index == INVALID_INDEX || index >= FoliageColor.colorMap.length) {
+        if (index == INVALID_INDEX || index >= FoliageColor.pixels.length) {
             return DEFAULT_COLOR;
         }
 
-        return FoliageColor.colorMap[index];
+        return FoliageColor.pixels[index];
     }
 
     public static int getIndex(double temperature, double humidity) {

@@ -6,12 +6,12 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(SpriteContents.Ticker.class)
 public interface SpriteContentsAnimatorImplAccessor {
-    @Accessor
+    @Accessor("animationInfo")
     SpriteContents.AnimatedTexture getAnimation();
 
     @Accessor("frame")
     int getFrameIndex();
 
-    @Accessor("currentTime")
+    @Accessor("subFrame")
     int getFrameTicks();
 }

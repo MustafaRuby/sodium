@@ -58,14 +58,14 @@ public class ControlElement<T> extends AbstractWidget {
     }
 
     @Override
-    public @Nullable ComponentPath getNavigationPath(FocusNavigationEvent navigation) {
+    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent navigation) {
         if (!this.option.isAvailable())
             return null;
-        return super.getNavigationPath(navigation);
+        return super.nextFocusPath(navigation);
     }
 
     @Override
-    public ScreenRectangle getNavigationFocus() {
+    public ScreenRectangle getRectangle() {
         return new ScreenRectangle(this.dim.x(), this.dim.y(), this.dim.width(), this.dim.height());
     }
 }

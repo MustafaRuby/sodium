@@ -26,7 +26,7 @@ public class WorldRendererMixin {
      * @author JellySquid
      * @reason Use intrinsics where possible to speed up vertex writing
      */
-    @Inject(method = "drawBox(Lnet/minecraft/client/util/math/PoseStack;Lnet/minecraft/client/render/VertexConsumer;DDDDDDFFFFFFF)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderLineBox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;DDDDDDFFFFFFF)V", at = @At("HEAD"), cancellable = true)
     private static void drawBoxFast(PoseStack matrices, VertexConsumer vertexConsumer, double x1, double y1, double z1,
                                     double x2, double y2, double z2, float red, float green, float blue, float alpha,
                                     float xAxisRed, float yAxisGreen, float zAxisBlue, CallbackInfo ci) {
@@ -38,8 +38,8 @@ public class WorldRendererMixin {
 
         ci.cancel();
 
-        Matrix4f position = matrices.peek().getPositionMatrix();
-        Matrix3f normal = matrices.peek().getNormalMatrix();
+        Matrix4f position = matrices.last().pose();
+        Matrix3f normal = matrices.last().normal();
 
         float x1f = (float) x1;
         float y1f = (float) y1;

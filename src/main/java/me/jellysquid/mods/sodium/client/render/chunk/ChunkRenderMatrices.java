@@ -7,7 +7,7 @@ import org.joml.Matrix4fc;
 
 public record ChunkRenderMatrices(Matrix4fc projection, Matrix4fc modelView) {
     public static ChunkRenderMatrices from(PoseStack stack) {
-        PoseStack.Entry entry = stack.peek();
-        return new ChunkRenderMatrices(new Matrix4f(RenderSystem.getProjectionMatrix()), new Matrix4f(entry.getPositionMatrix()));
+        PoseStack.Pose entry = stack.last();
+        return new ChunkRenderMatrices(new Matrix4f(RenderSystem.getProjectionMatrix()), new Matrix4f(entry.pose()));
     }
 }

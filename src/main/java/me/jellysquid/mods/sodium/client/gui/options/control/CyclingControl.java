@@ -6,7 +6,7 @@ import me.jellysquid.mods.sodium.client.util.Dim2i;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.gui.navigation.CommonInputs;
 import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.Validate;
 
@@ -35,7 +35,7 @@ public class CyclingControl<T extends Enum<T>> implements Control<T> {
 
         this.option = option;
         this.allowedValues = allowedValues;
-        this.names = new Text[universe.length];
+        this.names = new Component[universe.length];
 
         for (int i = 0; i < this.names.length; i++) {
             Component name;
@@ -113,7 +113,7 @@ public class CyclingControl<T extends Enum<T>> implements Control<T> {
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
             if (!isFocused()) return false;
 
-            if (KeyCodes.isToggle(keyCode)) {
+            if (CommonInputs.selected(keyCode)) {
                 cycleControl(Screen.hasShiftDown());
                 return true;
             }

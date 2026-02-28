@@ -23,11 +23,11 @@ import java.util.Map;
 @Mixin(ModelPart.class)
 public class ModelPartMixin implements ModelPartData {
     @Shadow
-    public float pivotX;
+    public float x;
     @Shadow
-    public float pivotY;
+    public float y;
     @Shadow
-    public float pivotZ;
+    public float z;
 
     @Shadow
     public float xScale;
@@ -37,23 +37,23 @@ public class ModelPartMixin implements ModelPartData {
     public float zScale;
 
     @Shadow
-    public float yaw;
+    public float yRot;
     @Shadow
-    public float pitch;
+    public float xRot;
     @Shadow
-    public float roll;
+    public float zRot;
 
     @Shadow
     public boolean visible;
     @Shadow
-    public boolean hidden;
+    public boolean skipDraw;
 
-    @MutableBlockPos
+    @Mutable
     @Shadow
     @Final
-    private List<ModelPart.Cube> cuboids;
+    private List<ModelPart.Cube> cubes;
 
-    @MutableBlockPos
+    @Mutable
     @Shadow
     @Final
     private Map<String, ModelPart> children;
@@ -78,11 +78,11 @@ public class ModelPartMixin implements ModelPartData {
                 .toArray(ModelPart[]::new);
 
         // Try to catch errors caused by mods touching the collections after we've copied everything.
-        this.cuboids = Collections.unmodifiableList(this.cuboids);
+        this.cubes = Collections.unmodifiableList(this.cubes);
         this.children = Collections.unmodifiableMap(this.children);
     }
 
-    @Inject(method = "render(Lnet/minecraft/client/util/math/PoseStack;Lnet/minecraft/client/render/VertexConsumer;IIFFFF)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V", at = @At("HEAD"), cancellable = true)
     private void onRender(PoseStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha, CallbackInfo ci) {
         VertexBufferWriter writer = VertexConsumerUtils.convertOrLog(vertices);
 
@@ -100,13 +100,13 @@ public class ModelPartMixin implements ModelPartData {
      * @reason Apply transform more quickly
      */
     @Overwrite
-    public void rotate(PoseStack matrixStack) {
-        if (this.pivotX != 0.0F || this.pivotY != 0.0F || this.pivotZ != 0.0F) {
-            matrixStack.translate(this.pivotX * (1.0f / 16.0f), this.pivotY * (1.0f / 16.0f), this.pivotZ * (1.0f / 16.0f));
+    public void translateAndRotate(PoseStack matrixStack) {
+        if (this.x != 0.0F || this.y != 0.0F || this.z != 0.0F) {
+            matrixStack.translate(this.x * (1.0f / 16.0f), this.y * (1.0f / 16.0f), this.z * (1.0f / 16.0f));
         }
 
-        if (this.pitch != 0.0F || this.yaw != 0.0F || this.roll != 0.0F) {
-            MatrixHelper.rotateZYX(matrixStack.peek(), this.roll, this.yaw, this.pitch);
+        if (this.xRot != 0.0F || this.yRot != 0.0F || this.zRot != 0.0F) {
+            MatrixHelper.rotateZYX(matrixStack.last(), this.zRot, this.yRot, this.xRot);
         }
 
         if (this.xScale != 1.0F || this.yScale != 1.0F || this.zScale != 1.0F) {
@@ -126,7 +126,7 @@ public class ModelPartMixin implements ModelPartData {
 
     @Override
     public boolean isHidden() {
-        return this.hidden;
+        return this.skipDraw;
     }
 
     @Override

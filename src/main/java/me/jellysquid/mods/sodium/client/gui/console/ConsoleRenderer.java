@@ -48,8 +48,8 @@ public class ConsoleRenderer {
 
         Minecraft client = Minecraft.getInstance();
 
-        var matrices = context.getMatrices();
-        matrices.push();
+        var matrices = context.pose();
+        matrices.pushPose();
         matrices.translate(0.0f, 0.0f, 1000.0f);
 
 
@@ -73,12 +73,12 @@ public class ConsoleRenderer {
 
                 var messageWidth = 270;
 
-                TextHandler textHandler = client.font.getTextHandler();
-                textHandler.wrapLines(message.text(), messageWidth - 20, Style.EMPTY, (text, lastLineWrapped) -> {
-                    lines.add(Language.getInstance().reorder(text));
+                StringSplitter splitter = client.font.getSplitter();
+                splitter.splitLines(message.text(), messageWidth - 20, Style.EMPTY, (text, lastLineWrapped) -> {
+                    lines.add(Language.getInstance().getVisualOrder(text));
                 });
 
-                var messageHeight = (client.font.fontHeight * lines.size()) + (paddingHeight * 2);
+                var messageHeight = (client.font.lineHeight * lines.size()) + (paddingHeight * 2);
 
                 renders.add(new MessageRender(x, y, messageWidth, messageHeight, message.level(), lines, opacity));
 
@@ -86,8 +86,8 @@ public class ConsoleRenderer {
             }
         }
 
-        var mouseX = client.mouse.getX() / client.getWindow().getScaleFactor();
-        var mouseY = client.mouse.getY() / client.getWindow().getScaleFactor();
+        var mouseX = client.mouseHandler.xpos() / client.getWindow().getGuiScale();
+        var mouseY = client.mouseHandler.ypos() / client.getWindow().getGuiScale();
 
         boolean hovered = false;
 
@@ -122,14 +122,14 @@ public class ConsoleRenderer {
 
             for (var line : render.lines()) {
                 // message text
-                context.drawText(client.font, line, x + paddingWidth + 3, y + paddingHeight,
+                context.drawString(client.font, line, x + paddingWidth + 3, y + paddingHeight,
                         ColorARGB.withAlpha(colors.text(), weightAlpha(opacity)), false);
 
-                y += client.font.fontHeight;
+                y += client.font.lineHeight;
             }
         }
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     private static double getMessageOpacity(ActiveMessage message, double time) {
@@ -164,7 +164,7 @@ public class ConsoleRenderer {
     }
 
     private static double getAnimationProgress(double currentTime, double startTime, double endTime) {
-        return Mth.clamp(Mth.getLerpProgress(currentTime, startTime, endTime), 0.0D, 1.0D);
+        return Mth.clamp(Mth.inverseLerp(currentTime, startTime, endTime), 0.0D, 1.0D);
     }
 
     private static int weightAlpha(double scale) {
@@ -176,7 +176,7 @@ public class ConsoleRenderer {
         public static ActiveMessage create(Message message, double timestamp) {
             var text = message.text()
                     .copy()
-                    .styled((style) -> style.withFont(Minecraft.UNICODE_FONT_ID));
+                    .withStyle((style) -> style.withFont(Minecraft.UNIFORM_FONT));
 
             return new ActiveMessage(message.level(), text, message.duration(), timestamp);
         }

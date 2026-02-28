@@ -1,6 +1,10 @@
 package me.jellysquid.mods.sodium.client.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import me.jellysquid.mods.sodium.client.SodiumClientMod;
 import me.jellysquid.mods.sodium.client.gl.device.CommandList;
@@ -15,17 +19,21 @@ import me.jellysquid.mods.sodium.client.render.chunk.terrain.DefaultTerrainRende
 import me.jellysquid.mods.sodium.client.render.viewport.Viewport;
 import me.jellysquid.mods.sodium.client.util.NativeBuffer;
 import me.jellysquid.mods.sodium.client.world.WorldRendererExtended;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.resources.model.ModelBakery;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.core.*;
+import net.minecraft.server.level.BlockDestructionProgress;
+import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.util.Collection;
@@ -68,7 +76,7 @@ public class SodiumWorldRenderer {
      * @return The SodiumWorldRenderer based on the current dimension, or null if none is attached
      */
     public static SodiumWorldRenderer instanceNullable() {
-        var world = Minecraft.getInstance().worldRenderer;
+        var world = Minecraft.getInstance().levelRenderer;
 
         if (world instanceof WorldRendererExtended) {
             return ((WorldRendererExtended) world).sodium$getLevelRenderer();
@@ -153,7 +161,7 @@ public class SodiumWorldRenderer {
 
         this.useEntityCulling = SodiumClientMod.options().performance.useEntityCulling;
 
-        if (this.client.options.getClampedViewDistance() != this.renderDistance) {
+        if (this.client.options.getEffectiveRenderDistance() != this.renderDistance) {
             this.reload();
         }
 
@@ -166,9 +174,9 @@ public class SodiumWorldRenderer {
             throw new IllegalStateException("Client instance has no active player entity");
         }
 
-        Vec3 pos = camera.getPos();
-        float pitch = camera.getPitch();
-        float yaw = camera.getYaw();
+        Vec3 pos = camera.getPosition();
+        float pitch = camera.getXRot();
+        float yaw = camera.getYRot();
         float fogDistance = RenderSystem.getShaderFogEnd();
         Matrix4f projectionMatrix = new Matrix4f(RenderSystem.getProjectionMatrix());
 
@@ -188,33 +196,33 @@ public class SodiumWorldRenderer {
         this.lastFogDistance = fogDistance;
         this.lastProjectionMatrix = projectionMatrix;
 
-        profiler.swap("chunk_update");
+        profiler.popPush("chunk_update");
 
         this.renderSectionManager.updateChunks(updateChunksImmediately);
 
-        profiler.swap("chunk_upload");
+        profiler.popPush("chunk_upload");
 
         this.renderSectionManager.uploadChunks();
 
         if (this.renderSectionManager.needsUpdate()) {
-            profiler.swap("chunk_render_lists");
+            profiler.popPush("chunk_render_lists");
 
             this.renderSectionManager.update(camera, viewport, frame, spectator);
         }
 
         if (updateChunksImmediately) {
-            profiler.swap("chunk_upload_immediately");
+            profiler.popPush("chunk_upload_immediately");
 
             this.renderSectionManager.uploadChunks();
         }
 
-        profiler.swap("chunk_render_tick");
+        profiler.popPush("chunk_render_tick");
 
         this.renderSectionManager.tickVisibleRenders();
 
         profiler.pop();
 
-        Entity.setRenderDistanceMultiplier(Mth.clamp((double) this.client.options.getClampedViewDistance() / 8.0D, 1.0D, 2.5D) * this.client.options.getEntityDistanceScaling().getValue());
+        Entity.setViewScale(Mth.clamp((double) this.client.options.getEffectiveRenderDistance() / 8.0D, 1.0D, 2.5D) * this.client.options.entityDistanceScaling().get());
     }
 
     private void processChunkEvents() {
@@ -226,10 +234,10 @@ public class SodiumWorldRenderer {
      * Performs a render pass for the given {@link RenderType} and draws all visible chunks for it.
      */
     public void drawChunkLayer(RenderType renderLayer, ChunkRenderMatrices matrices, double x, double y, double z) {
-        if (renderLayer == RenderType.getSolid()) {
+        if (renderLayer == RenderType.solid()) {
             this.renderSectionManager.renderLayer(matrices, DefaultTerrainRenderPasses.SOLID, x, y, z);
             this.renderSectionManager.renderLayer(matrices, DefaultTerrainRenderPasses.CUTOUT, x, y, z);
-        } else if (renderLayer == RenderType.getTranslucent()) {
+        } else if (renderLayer == RenderType.translucent()) {
             this.renderSectionManager.renderLayer(matrices, DefaultTerrainRenderPasses.TRANSLUCENT, x, y, z);
         }
     }
@@ -250,7 +258,7 @@ public class SodiumWorldRenderer {
             this.renderSectionManager = null;
         }
 
-        this.renderDistance = this.client.options.getClampedViewDistance();
+        this.renderDistance = this.client.options.getEffectiveRenderDistance();
 
         this.renderSectionManager = new RenderSectionManager(this.world, this.renderDistance, commandList);
 
@@ -263,12 +271,12 @@ public class SodiumWorldRenderer {
                                     Long2ObjectMap<SortedSet<BlockDestructionProgress>> blockBreakingProgressions,
                                     Camera camera,
                                     float tickDelta) {
-        MultiBufferSource.BufferSource immediate = bufferBuilders.getEntityVertexMultiConsumer();
+        MultiBufferSource.BufferSource immediate = bufferBuilders.bufferSource();
 
-        Vec3 cameraPos = camera.getPos();
-        double x = cameraPos.getX();
-        double y = cameraPos.getY();
-        double z = cameraPos.getZ();
+        Vec3 cameraPos = camera.getPosition();
+        double x = cameraPos.x();
+        double y = cameraPos.y();
+        double z = cameraPos.z();
 
         BlockEntityRenderDispatcher blockEntityRenderer = Minecraft.getInstance().getBlockEntityRenderDispatcher();
 
@@ -347,32 +355,32 @@ public class SodiumWorldRenderer {
                                           double z,
                                           BlockEntityRenderDispatcher dispatcher,
                                           BlockEntity entity) {
-        BlockPos pos = entity.getPos();
+        BlockPos pos = entity.getBlockPos();
 
-        matrices.push();
+        matrices.pushPose();
         matrices.translate((double) pos.getX() - x, (double) pos.getY() - y, (double) pos.getZ() - z);
 
         MultiBufferSource consumer = immediate;
         SortedSet<BlockDestructionProgress> breakingInfo = blockBreakingProgressions.get(pos.asLong());
 
         if (breakingInfo != null && !breakingInfo.isEmpty()) {
-            int stage = breakingInfo.last().getStage();
+            int stage = breakingInfo.last().getProgress();
 
             if (stage >= 0) {
-                var bufferBuilder = bufferBuilders.getEffectVertexMultiConsumer()
-                        .getBuffer(ModelLoader.BLOCK_DESTRUCTION_RENDER_LAYERS.get(stage));
+                var bufferBuilder = bufferBuilders.crumblingBufferSource()
+                        .getBuffer(ModelBakery.DESTROY_TYPES.get(stage));
 
-                PoseStack.Entry entry = matrices.peek();
+                PoseStack.Pose entry = matrices.last();
                 VertexConsumer transformer = new SheetedDecalTextureGenerator(bufferBuilder,
-                        entry.getPositionMatrix(), entry.getNormalMatrix(), 1.0f);
+                        entry.pose(), entry.normal(), 1.0f);
 
-                consumer = (layer) -> layer.hasCrumbling() ? VertexMultiConsumer.union(transformer, immediate.getBuffer(layer)) : immediate.getBuffer(layer);
+                consumer = (layer) -> layer.affectsCrumbling() ? VertexMultiConsumer.create(transformer, immediate.getBuffer(layer)) : immediate.getBuffer(layer);
             }
         }
 
         dispatcher.render(entity, tickDelta, matrices, consumer);
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     // the volume of a section multiplied by the number of sections to be checked at most
@@ -388,11 +396,11 @@ public class SodiumWorldRenderer {
         }
 
         // Ensure entities with outlines or nametags are always visible
-        if (this.client.hasOutline(entity) || entity.shouldRenderName()) {
+        if (this.client.shouldEntityAppearGlowing(entity) || entity.shouldShowName()) {
             return true;
         }
 
-        Box box = entity.getVisibilityBoundingBox();
+        AABB box = entity.getBoundingBoxForCulling();
 
         // bail on very large entities to avoid checking many sections
         double entityVolume = (box.maxX - box.minX) * (box.maxY - box.minY) * (box.maxZ - box.minZ);
@@ -407,17 +415,17 @@ public class SodiumWorldRenderer {
     public boolean isBoxVisible(double x1, double y1, double z1, double x2, double y2, double z2) {
         // Boxes outside the valid world height will never map to a rendered chunk
         // Always render these boxes or they'll be culled incorrectly!
-        if (y2 < this.world.getBottomY() + 0.5D || y1 > this.world.getTopY() - 0.5D) {
+        if (y2 < this.world.getMinBuildHeight() + 0.5D || y1 > this.world.getMaxBuildHeight() - 0.5D) {
             return true;
         }
 
-        int minX = SectionPos.getSectionCoord(x1 - 0.5D);
-        int minY = SectionPos.getSectionCoord(y1 - 0.5D);
-        int minZ = SectionPos.getSectionCoord(z1 - 0.5D);
+        int minX = SectionPos.blockToSectionCoord(x1 - 0.5D);
+        int minY = SectionPos.blockToSectionCoord(y1 - 0.5D);
+        int minZ = SectionPos.blockToSectionCoord(z1 - 0.5D);
 
-        int maxX = SectionPos.getSectionCoord(x2 + 0.5D);
-        int maxY = SectionPos.getSectionCoord(y2 + 0.5D);
-        int maxZ = SectionPos.getSectionCoord(z2 + 0.5D);
+        int maxX = SectionPos.blockToSectionCoord(x2 + 0.5D);
+        int maxY = SectionPos.blockToSectionCoord(y2 + 0.5D);
+        int maxZ = SectionPos.blockToSectionCoord(z2 + 0.5D);
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {

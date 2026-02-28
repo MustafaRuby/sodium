@@ -19,17 +19,17 @@ public class TextureManagerMixin {
      * @reason Use our own asynchronous executor for render commands
      */
     @Overwrite
-    private static void runOnRenderThread(Runnable runnable) {
+    private static void execute(Runnable runnable) {
         DeferredRenderTask.schedule(runnable);
     }
 
     @Redirect(method = "reload", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;thenAcceptAsync(Ljava/util/function/Consumer;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
     public <T> CompletableFuture<?> redirectReloadTask(CompletableFuture<T> instance, Consumer<T> consumer, Executor executor) {
-        return instance.thenAcceptAsync(consumer, TextureManagerMixin::runOnRenderThread);
+        return instance.thenAcceptAsync(consumer, TextureManagerMixin::execute);
     }
 
     @Redirect(method = {
-            "bindTexture"
+            "_bind"
     }, at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThread()Z"))
     private boolean validateCurrentThread$bindTexture() {
         return RenderAsserts.validateCurrentThread();

@@ -48,8 +48,8 @@ public class ScreenPrompt implements GuiEventListener, Renderable {
     }
 
     public void render(GuiGraphics drawContext, int mouseX, int mouseY, float delta) {
-        var matrices = drawContext.getMatrices();
-        matrices.push();
+        var matrices = drawContext.pose();
+        matrices.pushPose();
         matrices.translate(0.0f, 0.0f, 1000.0f);
 
         var parentDimensions = this.parent.getDimensions();
@@ -62,7 +62,7 @@ public class ScreenPrompt implements GuiEventListener, Renderable {
         int boxY = (parentDimensions.height() / 2) - (height / 2);
 
         drawContext.fill(boxX, boxY, boxX + width, boxY + height, 0xFF171717);
-        drawContext.drawBorder(boxX, boxY, width, height, 0xFF121212);
+        drawContext.renderOutline(boxX, boxY, width, height, 0xFF121212);
 
         matrices.translate(0.0f, 0.0f, 50.0f);
 
@@ -77,11 +77,11 @@ public class ScreenPrompt implements GuiEventListener, Renderable {
         var textRenderer = Minecraft.getInstance().font;
 
         for (var paragraph : this.text) {
-            var formatted = textRenderer.wrapLines(paragraph, textMaxWidth);
+            var formatted = textRenderer.split(paragraph, textMaxWidth);
 
             for (var line : formatted) {
-                drawContext.drawText(textRenderer, line, textX, textY, 0xFFFFFFFF, true);
-                textY += textRenderer.fontHeight + 2;
+                drawContext.drawString(textRenderer, line, textX, textY, 0xFFFFFFFF, true);
+                textY += textRenderer.lineHeight + 2;
             }
 
             textY += 8;
@@ -91,7 +91,7 @@ public class ScreenPrompt implements GuiEventListener, Renderable {
             button.render(drawContext, mouseX, mouseY, delta);
         }
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     private static FlatButtonWidget.Style createButtonStyle() {

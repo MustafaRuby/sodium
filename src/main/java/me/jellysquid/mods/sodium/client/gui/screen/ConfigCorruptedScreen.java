@@ -30,7 +30,7 @@ public class ConfigCorruptedScreen extends Screen {
         """;
 
     private static final List<Component> TEXT_BODY = Arrays.stream(TEXT_BODY_RAW.split("\n"))
-            .map(Text::literal)
+            .map(Component::literal)
             .collect(Collectors.toList());
 
     private static final int BUTTON_WIDTH = 140;
@@ -54,16 +54,16 @@ public class ConfigCorruptedScreen extends Screen {
 
         int buttonY = this.height - SCREEN_PADDING - BUTTON_HEIGHT;
 
-        this.addDrawableChild(Button.builder(Component.literal("Continue"), (btn) -> {
+        this.addRenderableWidget(Button.builder(Component.literal("Continue"), (btn) -> {
             Console.instance().logMessage(MessageLevel.INFO, Component.translatable("sodium.console.config_file_was_reset"), 3.0);
 
             SodiumClientMod.restoreDefaultOptions();
             Minecraft.getInstance().setScreen(this.nextScreen.apply(this.prevScreen));
-        }).dimensions(this.width - SCREEN_PADDING - BUTTON_WIDTH, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+        }).bounds(this.width - SCREEN_PADDING - BUTTON_WIDTH, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
 
-        this.addDrawableChild(Button.builder(Component.literal("Go back"), (btn) -> {
+        this.addRenderableWidget(Button.builder(Component.literal("Go back"), (btn) -> {
             Minecraft.getInstance().setScreen(this.prevScreen);
-        }).dimensions(SCREEN_PADDING, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
+        }).bounds(SCREEN_PADDING, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT).build());
     }
 
     @Override

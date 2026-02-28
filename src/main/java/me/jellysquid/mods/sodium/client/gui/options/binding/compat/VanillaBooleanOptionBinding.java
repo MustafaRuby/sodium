@@ -13,11 +13,11 @@ public class VanillaBooleanOptionBinding implements OptionBinding<Options, Boole
 
     @Override
     public void setValue(Options storage, Boolean value) {
-        this.option.setValue(value);
+        this.option.set(value);
     }
 
     @Override
     public Boolean getValue(Options storage) {
-        return this.option.getValue();
+        return this.option.get();
     }
 }

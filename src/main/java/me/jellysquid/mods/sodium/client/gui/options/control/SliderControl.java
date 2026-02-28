@@ -87,7 +87,7 @@ public class SliderControl implements Control<Integer> {
         private void renderStandaloneValue(GuiGraphics drawContext) {
             int sliderX = this.sliderBounds.getX();
             int sliderY = this.sliderBounds.getY();
-            int sliderWidth = this.sliderBounds.width();
+            int sliderWidth = this.sliderBounds.getWidth();
             int sliderHeight = this.sliderBounds.getHeight();
 
             Component label = this.formatter.format(this.option.getValue());
@@ -99,7 +99,7 @@ public class SliderControl implements Control<Integer> {
         private void renderSlider(GuiGraphics drawContext) {
             int sliderX = this.sliderBounds.getX();
             int sliderY = this.sliderBounds.getY();
-            int sliderWidth = this.sliderBounds.width();
+            int sliderWidth = this.sliderBounds.getWidth();
             int sliderHeight = this.sliderBounds.getHeight();
 
             this.thumbPosition = this.getThumbPositionForValue(this.option.getValue());
@@ -148,7 +148,7 @@ public class SliderControl implements Control<Integer> {
         }
 
         private void setValueFromMouse(double d) {
-            this.setValue((d - (double) this.sliderBounds.getX()) / (double) this.sliderBounds.width());
+            this.setValue((d - (double) this.sliderBounds.getX()) / (double) this.sliderBounds.getWidth());
         }
 
         public void setValue(double d) {
@@ -165,10 +165,10 @@ public class SliderControl implements Control<Integer> {
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
             if (!isFocused()) return false;
 
-            if (keyCode == InputUtil.GLFW_KEY_LEFT) {
+            if (keyCode == InputConstants.KEY_LEFT) {
                 this.option.setValue(Mth.clamp(this.option.getValue() - this.interval, this.min, this.max));
                 return true;
-            } else if (keyCode == InputUtil.GLFW_KEY_RIGHT) {
+            } else if (keyCode == InputConstants.KEY_RIGHT) {
                 this.option.setValue(Mth.clamp(this.option.getValue() + this.interval, this.min, this.max));
                 return true;
             }

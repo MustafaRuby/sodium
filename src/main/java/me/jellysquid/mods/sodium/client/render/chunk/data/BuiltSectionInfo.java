@@ -100,7 +100,7 @@ public class BuiltSectionInfo {
 
     private static BuiltSectionInfo createEmptyData() {
         VisibilitySet occlusionData = new VisibilitySet();
-        occlusionData.addOpenEdgeFaces(EnumSet.allOf(Direction.class));
+        occlusionData.setAll(true);
 
         BuiltSectionInfo.Builder meshInfo = new BuiltSectionInfo.Builder();
         meshInfo.setOcclusionData(occlusionData);

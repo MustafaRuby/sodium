@@ -39,7 +39,7 @@ public class SpriteContentsInterpolationMixin {
      * @reason Drastic optimizations
      */
     @Overwrite
-    void apply(int x, int y, SpriteContents.Ticker arg) {
+    void uploadInterpolatedFrame(int x, int y, SpriteContents.Ticker arg) {
         SpriteContents.AnimatedTexture animation = ((SpriteContentsAnimatorImplAccessor) arg).getAnimation();
         SpriteContentsAnimationAccessor animation2 = (SpriteContentsAnimationAccessor) ((SpriteContentsAnimatorImplAccessor) arg).getAnimation();
         List<SpriteContents.FrameInfo> frames = ((SpriteContentsAnimationAccessor) animation).getFrames();
@@ -58,13 +58,13 @@ public class SpriteContentsInterpolationMixin {
 
         for (int layer = 0; layer < this.images.length; layer++) {
             int width = this.parent.width() >> layer;
-            int height = this.parent.getHeight() >> layer;
+            int height = this.parent.height() >> layer;
 
-            int curX = ((curIndex % animation2.getFrameCount()) * width);
-            int curY = ((curIndex / animation2.getFrameCount()) * height);
+            int curX = ((curIndex % animation2.getFrameRowSize()) * width);
+            int curY = ((curIndex / animation2.getFrameRowSize()) * height);
 
-            int nextX = ((nextIndex % animation2.getFrameCount()) * width);
-            int nextY = ((nextIndex / animation2.getFrameCount()) * height);
+            int nextX = ((nextIndex % animation2.getFrameRowSize()) * width);
+            int nextY = ((nextIndex / animation2.getFrameRowSize()) * height);
 
             NativeImage src = ((SpriteContentsAccessor) this.parent).getImages()[layer];
             NativeImage dst = this.images[layer];
@@ -74,8 +74,8 @@ public class SpriteContentsInterpolationMixin {
 
             for (int layerY = 0; layerY < height; layerY++) {
                 // Pointers to the pixel array for the current and next frame
-                long pRgba1 = ppSrcPixel + (curX + (long) (curY + layerY) * src.width()) * STRIDE;
-                long pRgba2 = ppSrcPixel + (nextX + (long) (nextY + layerY) * src.width()) * STRIDE;
+                long pRgba1 = ppSrcPixel + (curX + (long) (curY + layerY) * src.getWidth()) * STRIDE;
+                long pRgba2 = ppSrcPixel + (nextX + (long) (nextY + layerY) * src.getWidth()) * STRIDE;
 
                 for (int layerX = 0; layerX < width; layerX++) {
                     int rgba1 = MemoryUtil.memGetInt(pRgba1);

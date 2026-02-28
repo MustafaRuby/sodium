@@ -18,7 +18,7 @@ public class MinecraftOptionsStorage implements OptionStorage<Options> {
 
     @Override
     public void save() {
-        this.getData().write();
+        this.getData().save();
 
         SodiumClientMod.logger().info("Flushed changes to Minecraft configuration");
     }

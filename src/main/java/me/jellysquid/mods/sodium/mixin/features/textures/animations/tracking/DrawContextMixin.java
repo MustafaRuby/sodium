@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GuiGraphics.class)
 public class DrawContextMixin {
-    @Inject(method = "drawSprite(IIIIILnet/minecraft/client/texture/TextureAtlasSprite;)V", at = @At("HEAD"))
+    @Inject(method = "blit(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V", at = @At("HEAD"))
     private void preDrawSprite(int x, int y, int z,
                                int width, int height,
                                TextureAtlasSprite sprite,
@@ -19,7 +19,7 @@ public class DrawContextMixin {
         SpriteUtil.INSTANCE.markSpriteActive(sprite);
     }
 
-    @Inject(method = "drawSprite(IIIIILnet/minecraft/client/texture/TextureAtlasSprite;FFFF)V", at = @At("HEAD"))
+    @Inject(method = "blit(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;FFFF)V", at = @At("HEAD"))
     private void preDrawSprite(int x, int y, int z,
                                int width, int height,
                                TextureAtlasSprite sprite,

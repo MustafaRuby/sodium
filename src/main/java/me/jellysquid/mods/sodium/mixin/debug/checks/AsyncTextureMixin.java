@@ -14,7 +14,7 @@ public class AsyncTextureMixin {
      * @reason Redirect asynchronous render commands to our helper
      */
     @Overwrite
-    private static Executor createRenderThreadExecutor(Executor executor) {
+    private static Executor executor(Executor executor) {
         return DeferredRenderTask::schedule;
     }
 }

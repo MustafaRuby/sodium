@@ -12,10 +12,10 @@ import java.util.Deque;
 public abstract class MatrixStackMixin {
     @Shadow
     @Final
-    private Deque<PoseStack.Entry> stack;
+    private Deque<PoseStack.Pose> stack;
 
     @Unique
-    private final Deque<PoseStack.Entry> cache = new ArrayDeque<>();
+    private final Deque<PoseStack.Pose> cache = new ArrayDeque<>();
 
 
     /**
@@ -23,19 +23,19 @@ public abstract class MatrixStackMixin {
      * @reason Re-use entries when possible
      */
     @Overwrite
-    public void push() {
+    public void pushPose() {
         var prev = this.stack.getLast();
 
-        PoseStack.Entry entry;
+        PoseStack.Pose entry;
 
         if (!this.cache.isEmpty()) {
             entry = this.cache.removeLast();
-            entry.getPositionMatrix()
-                    .set(prev.getPositionMatrix());
-            entry.getNormalMatrix()
-                    .set(prev.getNormalMatrix());
+            entry.pose()
+                    .set(prev.pose());
+            entry.normal()
+                    .set(prev.normal());
         } else {
-            entry = new PoseStack.Entry(new Matrix4f(prev.getPositionMatrix()), new Matrix3f(prev.getNormalMatrix()));
+            entry = new PoseStack.Pose(new Matrix4f(prev.pose()), new Matrix3f(prev.normal()));
         }
 
         this.stack.addLast(entry);
@@ -46,7 +46,7 @@ public abstract class MatrixStackMixin {
      * @reason Re-use entries when possible
      */
     @Overwrite
-    public void pop() {
+    public void popPose() {
         this.cache.addLast(this.stack.removeLast());
     }
 }

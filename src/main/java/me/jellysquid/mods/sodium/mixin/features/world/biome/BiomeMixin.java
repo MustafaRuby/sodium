@@ -13,11 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class BiomeMixin {
     @Shadow
     @Final
-    private BiomeEffects effects;
+    private BiomeSpecialEffects effects;
 
     @Shadow
     @Final
-    private Biome.Weather weather;
+    private Biome.ClimateSettings weather;
 
     @Unique
     private boolean hasCustomGrassColor;
@@ -35,7 +35,7 @@ public abstract class BiomeMixin {
     private int defaultColorIndex;
 
     @Unique
-    private BiomeEffects cachedSpecialEffects;
+    private BiomeSpecialEffects cachedSpecialEffects;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
@@ -46,14 +46,14 @@ public abstract class BiomeMixin {
     private void setupColors() {
         this.cachedSpecialEffects = effects;
 
-        var grassColor = this.effects.getGrassColor();
+        var grassColor = this.effects.getGrassColorOverride();
 
         if (grassColor.isPresent()) {
             this.hasCustomGrassColor = true;
             this.customGrassColor = grassColor.get();
         }
 
-        var foliageColor = this.effects.getFoliageColor();
+        var foliageColor = this.effects.getFoliageColorOverride();
 
         if (foliageColor.isPresent()) {
             this.hasCustomFoliageColor = true;
@@ -68,7 +68,7 @@ public abstract class BiomeMixin {
      * @reason Avoid unnecessary pointer de-references and allocations
      */
     @Overwrite
-    public int getGrassColorAt(double x, double z) {
+    public int getGrassColor(double x, double z) {
         if (this.effects != this.cachedSpecialEffects) {
             setupColors();
         }
@@ -83,8 +83,8 @@ public abstract class BiomeMixin {
 
         var modifier = this.effects.getGrassColorModifier();
 
-        if (modifier != BiomeEffects.GrassColorModifier.NONE) {
-            color = modifier.getModifiedGrassColor(x, z, color);
+        if (modifier != BiomeSpecialEffects.GrassColorModifier.NONE) {
+            color = modifier.modifyColor(x, z, color);
         }
 
         return color;

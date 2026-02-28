@@ -30,7 +30,7 @@ public class BlockRenderCache {
         this.blockRenderer = new BlockRenderer(colorRegistry, lightPipelineProvider);
         this.fluidRenderer = new FluidRenderer(colorRegistry, lightPipelineProvider);
 
-        this.blockModels = client.getModelManager().getBlockModels();
+        this.blockModels = client.getModelManager().getBlockModelShaper();
     }
 
     public BlockModelShaper getBlockModels() {

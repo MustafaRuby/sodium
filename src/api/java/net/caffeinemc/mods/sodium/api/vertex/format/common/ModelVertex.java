@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 public final class ModelVertex {
     public static final VertexFormatDescription FORMAT = VertexFormatRegistry.instance()
-            .get(DefaultVertexFormat.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+            .get(DefaultVertexFormat.NEW_ENTITY);
 
     public static final int STRIDE = 36;
 

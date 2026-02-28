@@ -32,17 +32,17 @@ import java.util.List;
 @Mixin(ItemRenderer.class)
 public class ItemRendererMixin {
     @Unique
-    private final RandomSource random = new LocalRandom(42L);
+    private final RandomSource random = new SingleThreadedRandomSource(42L);
 
     @Shadow
     @Final
-    private ItemColors colors;
+    private ItemColors itemColors;
 
     /**
      * @reason Avoid allocations
      * @author JellySquid
      */
-    @Inject(method = "renderBakedItemModel", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderModelLists", at = @At("HEAD"), cancellable = true)
     private void renderModelFast(BakedModel model, ItemStack itemStack, int light, int overlay, PoseStack matrixStack, VertexConsumer vertexConsumer, CallbackInfo ci) {
         var writer = VertexConsumerUtils.convertOrLog(vertexConsumer);
 
@@ -53,12 +53,12 @@ public class ItemRendererMixin {
         ci.cancel();
 
         RandomSource random = this.random;
-        PoseStack.Entry matrices = matrixStack.peek();
+        PoseStack.Pose matrices = matrixStack.last();
 
         ItemColor colorProvider = null;
 
         if (!itemStack.isEmpty()) {
-            colorProvider = ((ItemColorsExtended) this.colors).sodium$getColorProvider(itemStack);
+            colorProvider = ((ItemColorsExtended) this.itemColors).sodium$getColorProvider(itemStack);
         }
 
         for (Direction direction : DirectionUtil.ALL_DIRECTIONS) {
@@ -80,11 +80,11 @@ public class ItemRendererMixin {
 
     @Unique
     @SuppressWarnings("ForLoopReplaceableByForEach")
-    private void renderBakedItemQuads(PoseStack.Entry matrices, VertexBufferWriter writer, List<BakedQuad> quads, ItemStack itemStack, ItemColor colorProvider, int light, int overlay) {
+    private void renderBakedItemQuads(PoseStack.Pose matrices, VertexBufferWriter writer, List<BakedQuad> quads, ItemStack itemStack, ItemColor colorProvider, int light, int overlay) {
         for (int i = 0; i < quads.size(); i++) {
             BakedQuad bakedQuad = quads.get(i);
 
-            if (bakedQuad.getVertexData().length < 32) {
+            if (bakedQuad.getVertices().length < 32) {
                 continue; // ignore bad quads
             }
 

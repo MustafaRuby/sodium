@@ -49,9 +49,9 @@ public class ChunkShaderInterface {
         this.bindTexture(ChunkShaderTextureSlot.BLOCK, TextureUtil.getBlockTextureId());
         this.bindTexture(ChunkShaderTextureSlot.LIGHT, TextureUtil.getLightTextureId());
 
-        var textureAtlas = (TextureAtlasAccessor) Minecraft.getInstance()
+        var textureAtlas = (SpriteAtlasTextureAccessor) Minecraft.getInstance()
                 .getTextureManager()
-                .getTexture(TextureAtlas.BLOCK_ATLAS_TEXTURE);
+                .getTexture(TextureAtlas.LOCATION_BLOCKS);
 
         // There is a limited amount of sub-texel precision when using hardware texture sampling. The mapped texture
         // area must be "shrunk" by at least one sub-texel to avoid bleed between textures in the atlas. And since we
@@ -60,7 +60,7 @@ public class ChunkShaderInterface {
         double subTexelOffset = 1.0f / CompactChunkVertex.TEXTURE_MAX_VALUE;
 
         this.uniformTexCoordShrink.set(
-                (float) (subTexelOffset - (((1.0D / textureAtlas.width()) / subTexelPrecision))),
+                (float) (subTexelOffset - (((1.0D / textureAtlas.getWidth()) / subTexelPrecision))),
                 (float) (subTexelOffset - (((1.0D / textureAtlas.getHeight()) / subTexelPrecision)))
         );
 

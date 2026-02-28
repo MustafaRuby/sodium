@@ -44,14 +44,14 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, Na
 
     protected void playClickSound() {
         Minecraft.getInstance().getSoundManager()
-                .play(SimpleSoundInstance.master(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F));
+                .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     protected int getStringWidth(FormattedText text) {
         return this.font.width(text);
     }
 
-    public NarratableEntry.NarrationPriority getType() {
+    public NarratableEntry.NarrationPriority narrationPriority() {
         if (this.focused) {
             return NarratableEntry.NarrationPriority.FOCUSED;
         }
@@ -62,17 +62,17 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, Na
     }
 
     @Override
-    public void appendNarrations(NarrationElementOutput builder) {
+    public void updateNarration(NarrationElementOutput builder) {
         if (this.focused) {
-            builder.put(NarratedElementType.USAGE, Component.translatable("narration.button.usage.focused"));
+            builder.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.focused"));
         } else if (this.hovered) {
-            builder.put(NarratedElementType.USAGE, Component.translatable("narration.button.usage.hovered"));
+            builder.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.hovered"));
         }
     }
 
     @Nullable
-    public ComponentPath getNavigationPath(FocusNavigationEvent navigation) {
-        return !this.isFocused() ? ComponentPath.of(this) : null;
+    public ComponentPath nextFocusPath(FocusNavigationEvent navigation) {
+        return !this.isFocused() ? ComponentPath.leaf(this) : null;
     }
 
     @Override

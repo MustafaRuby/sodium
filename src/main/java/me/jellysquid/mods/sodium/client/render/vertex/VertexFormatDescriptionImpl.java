@@ -20,7 +20,7 @@ public class VertexFormatDescriptionImpl implements VertexFormatDescription {
 
     public VertexFormatDescriptionImpl(VertexFormat format, int id) {
         this.id = id;
-        this.stride = format.getVertexSizeByte();
+        this.stride = format.getVertexSize();
 
         this.offsets = getOffsets(format);
         this.isSimple = checkSimple(format);
@@ -33,7 +33,7 @@ public class VertexFormatDescriptionImpl implements VertexFormatDescription {
         for (int elementIndex = 0; elementIndex < elementList.size(); elementIndex++) {
             var element = elementList.get(elementIndex);
             var commonType = CommonVertexAttribute.getCommonType(element);
-            if (element != DefaultVertexFormat.PADDING_ELEMENT && (commonType == null || !attributeSet.add(commonType))) {
+            if (element != DefaultVertexFormat.ELEMENT_PADDING && (commonType == null || !attributeSet.add(commonType))) {
                 return false;
             }
         }
