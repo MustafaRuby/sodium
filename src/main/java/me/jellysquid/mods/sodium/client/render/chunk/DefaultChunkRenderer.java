@@ -23,13 +23,12 @@ import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkMeshAttr
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexType;
 import me.jellysquid.mods.sodium.client.render.viewport.CameraTransform;
 import me.jellysquid.mods.sodium.client.util.BitwiseMath;
-import org.joml.Matrix4fc;
+
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.Iterator;
 
 public class DefaultChunkRenderer extends ShaderChunkRenderer {
-    private static int renderDebugCounter = 0;
     private final MultiDrawBatch batch;
 
     private final SharedQuadIndexBuffer sharedIndexBuffer;
@@ -55,10 +54,6 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
         shader.setProjectionMatrix(matrices.projection());
         shader.setModelViewMatrix(matrices.modelView());
 
-        // DIAGNOSTIC: Log model-view matrix and region offsets (only when we have regions to draw)
-        boolean shouldLog = false;
-        int regionLogCount = 0;
-
         Iterator<ChunkRenderList> iterator = renderLists.iterator(renderPass.isReverseOrder());
 
         while (iterator.hasNext()) {
@@ -75,33 +70,6 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
 
             if (this.batch.isEmpty()) {
                 continue;
-            }
-
-            // DIAGNOSTIC: Log region offsets (deferred until we actually have regions to draw)
-            if (renderDebugCounter < 3) {
-                if (!shouldLog) {
-                    shouldLog = true;
-                    renderDebugCounter++;
-                    Matrix4fc mv = matrices.modelView();
-                    org.slf4j.LoggerFactory.getLogger("Sodium-Debug").info(
-                        "RENDER pass={} camera=({},{},{}) intCam=({},{},{}) fracCam=({},{},{})",
-                        renderPass, camera.x, camera.y, camera.z,
-                        camera.intX, camera.intY, camera.intZ,
-                        camera.fracX, camera.fracY, camera.fracZ);
-                    org.slf4j.LoggerFactory.getLogger("Sodium-Debug").info(
-                        "ModelView row3=({},{},{},{})",
-                        mv.m30(), mv.m31(), mv.m32(), mv.m33());
-                }
-                if (regionLogCount++ < 5) {
-                    float rx = getCameraTranslation(region.getOriginX(), camera.intX, camera.fracX);
-                    float ry = getCameraTranslation(region.getOriginY(), camera.intY, camera.fracY);
-                    float rz = getCameraTranslation(region.getOriginZ(), camera.intZ, camera.fracZ);
-                    org.slf4j.LoggerFactory.getLogger("Sodium-Debug").info(
-                        "Region origin=({},{},{}) chunkOrigin=({},{},{}) u_RegionOffset=({},{},{}) batchSize={}",
-                        region.getOriginX(), region.getOriginY(), region.getOriginZ(),
-                        region.getChunkX(), region.getChunkY(), region.getChunkZ(),
-                        rx, ry, rz, this.batch.size);
-                }
             }
 
             this.sharedIndexBuffer.ensureCapacity(commandList, this.batch.getIndexBufferSize());
@@ -146,7 +114,7 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
             int slices;
 
             if (useBlockFaceCulling) {
-                slices = getVisibleFaces(originX, originY, originZ, chunkX, chunkY, chunkZ);
+                slices = getVisibleFaces(camera.intX, camera.intY, camera.intZ, chunkX, chunkY, chunkZ);
             } else {
                 slices = ModelQuadFacing.ALL;
             }

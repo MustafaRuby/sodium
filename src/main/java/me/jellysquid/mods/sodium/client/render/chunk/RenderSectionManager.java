@@ -104,8 +104,6 @@ public class RenderSectionManager {
         }
     }
 
-    private static int updateDebugCounter = 0;
-
     public void update(Camera camera, Viewport viewport, int frame, boolean spectator) {
         this.lastCameraPosition = camera.getBlockPosition();
 
@@ -113,24 +111,6 @@ public class RenderSectionManager {
 
         this.needsUpdate = false;
         this.lastUpdatedFrame = frame;
-
-        // Log early frames (0-20) AND later frames (50-80) to see before/after chunk build
-        int counter = updateDebugCounter++;
-        if (counter < 20 || (counter >= 50 && counter < 80)) {
-            int visibleSections = 0;
-            int regionsWithGeometry = 0;
-            var iter = this.renderLists.iterator();
-            while (iter.hasNext()) {
-                var list = iter.next();
-                int count = list.getSectionsWithGeometryCount();
-                visibleSections += count;
-                if (count > 0) regionsWithGeometry++;
-            }
-            org.slf4j.LoggerFactory.getLogger("Sodium-Debug").info(
-                "update: frame={}, totalSections={}, visibleSectionsWithGeometry={}, regionsWithGeometry={}, cameraBlock=({},{},{})",
-                frame, this.sectionByPosition.size(), visibleSections, regionsWithGeometry,
-                camera.getBlockPosition().getX(), camera.getBlockPosition().getY(), camera.getBlockPosition().getZ());
-        }
     }
 
     private void createTerrainRenderList(Camera camera, Viewport viewport, int frame, boolean spectator) {
@@ -160,8 +140,17 @@ public class RenderSectionManager {
     }
 
     private boolean shouldUseOcclusionCulling(Camera camera, boolean spectator) {
-        // DIAGNOSTIC: Disable occlusion culling to test if visibility traversal is the issue
-        return false;
+        final boolean useOcclusionCulling;
+        BlockPos origin = camera.getBlockPosition();
+
+        if (spectator && this.world.getBlockState(origin)
+                .isSolidRender(this.world, origin))
+        {
+            useOcclusionCulling = false;
+        } else {
+            useOcclusionCulling = Minecraft.getInstance().smartCull;
+        }
+        return useOcclusionCulling;
     }
 
     private void resetRenderLists() {
@@ -221,20 +210,7 @@ public class RenderSectionManager {
         this.needsUpdate = true;
     }
 
-    private static int renderLayerDebugCounter = 0;
-
     public void renderLayer(ChunkRenderMatrices matrices, TerrainRenderPass pass, double x, double y, double z) {
-        if (renderLayerDebugCounter++ < 30) {
-            int sections = 0;
-            var iter = this.renderLists.iterator();
-            while (iter.hasNext()) {
-                sections += iter.next().getSectionsWithGeometryCount();
-            }
-            org.slf4j.LoggerFactory.getLogger("Sodium-Debug").info(
-                "renderLayer: pass={}, sectionsWithGeometry={}, camera=({},{},{})",
-                pass, sections, x, y, z);
-        }
-
         RenderDevice device = RenderDevice.INSTANCE;
         CommandList commandList = device.createCommandList();
 

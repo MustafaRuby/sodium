@@ -25,6 +25,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
+import net.minecraftforge.client.model.data.ModelData;
 
 import java.util.Arrays;
 import java.util.List;
@@ -89,7 +90,7 @@ public class BlockRenderer {
         var random = this.random;
         random.setSeed(ctx.seed());
 
-        return ctx.model().getQuads(ctx.state(), face, random);
+        return ctx.model().getQuads(ctx.state(), face, random, ModelData.EMPTY, null);
     }
 
     private boolean isFaceVisible(BlockRenderContext ctx, Direction face) {
@@ -148,6 +149,9 @@ public class BlockRenderer {
         var vertices = this.vertices;
 
         ModelQuadFacing normalFace = quad.getNormalFace();
+        if (normalFace == null) {
+            normalFace = ModelQuadFacing.UNASSIGNED;
+        }
 
         for (int dstIndex = 0; dstIndex < 4; dstIndex++) {
             int srcIndex = orientation.getVertexIndex(dstIndex);

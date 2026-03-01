@@ -62,7 +62,7 @@ public class ClonedChunkSectionCache {
         @Nullable LevelChunkSection section = null;
 
         if (!this.world.isOutsideBuildHeight(SectionPos.sectionToBlockCoord(y))) {
-            section = chunk.getSections()[this.world.getSectionIndex(y)];
+            section = chunk.getSections()[this.world.getSectionIndexFromSectionY(y)];
         }
 
         return new ClonedChunkSection(this.world, chunk, section, SectionPos.of(x, y, z));

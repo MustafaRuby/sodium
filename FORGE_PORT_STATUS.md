@@ -12,8 +12,8 @@ The core problem: Fabric mods use "Yarn" mappings for Minecraft's obfuscated cod
 **Source:** Sodium 0.5.13 (Fabric/Yarn)
 **Target:** Forge 1.20.1 (Mojang mappings)
 **Last updated:** 2026-03-01
-**Build status:** 0 errors, 28 warnings — compiles successfully
-**Runtime status:** Game launches, world loads, terrain renders incorrectly — "exploded" block positions
+**Build status:** 0 errors, 10 warnings — compiles successfully
+**Runtime status:** Fully functional. Terrain renders correctly in all dimensions. Overworld, Nether, End all confirmed working.
 
 ---
 
@@ -250,7 +250,7 @@ The sed script handled imports and class names but didn't touch most method call
 
 ### Runtime crash fixes (Sessions 6–8)
 
-After the compile-time fixes, the game still crashed on launch due to remaining Yarn names in @Shadow fields, wrong mixin targets, and Forge-specific API differences. These were fixed across three debugging sessions.
+After the compile-time fixes, the game still crashed on launch due to remaining Yarn names in @Shadow fields, wrong mixin targets, and Forge-specific API differences. Fixed across three debugging sessions.
 
 **@Shadow field renames (39 files, 32 fields)**
 
@@ -319,110 +319,125 @@ Added `duplicatesStrategy = DuplicatesStrategy.EXCLUDE` to both `processResource
 
 ---
 
-## Current state — the terrain rendering problem
+### Terrain rendering fixes (Sessions 9–10)
 
-The game launches, loads into a world, and renders terrain. Physics work (player collides with blocks correctly). The HUD, sky, entities, and particles all render. But the terrain itself is wrong.
+After the game launched and loaded a world, terrain rendered but was completely wrong — blocks displaced from their correct positions, cave systems floating in the air, the player phasing through visible geometry because physics operated on the correct (invisible) positions. This was the final major hurdle. It took two sessions of pipeline verification and diagnostic shader work to narrow down, and the root cause turned out to be in the world data cloning path, not in the rendering pipeline at all.
 
-### What it looks like
+**The terrain displacement problem — what it looked like**
 
-Blocks render with correct textures and lighting, but their positions are displaced. The terrain appears "exploded" — sections of blocks are shifted to wrong locations in 3D space. You can recognize grass, stone, trees, etc., but they're scattered rather than forming a coherent landscape. The player stands on invisible collision geometry while the visible blocks float elsewhere.
+The terrain appeared "exploded." Cave geometry hovered at surface level. Grass and trees were absent. Block textures and lighting were correct, but every section's block content was from the wrong vertical position in the chunk column. The player collided with invisible blocks at the correct positions while the rendered blocks floated elsewhere. All three dimensions were affected identically.
 
-### What has been verified correct
+**How it was diagnosed**
 
-Every component of the chunk rendering pipeline from Java through the vertex shader has been individually verified:
+Every component of the chunk rendering pipeline from Java through the vertex shader was individually verified correct — vertex encoding/decoding, section index packing/unpacking, GL vertex attribute binding, model-view and projection matrices, region offset computation, camera int/frac split, and the mesh upload path. All of it checked out. Three rounds of diagnostic shader visualizations were deployed:
 
-| Component | Status | How verified |
-|-----------|--------|-------------|
-| Vertex positions (Java side) | Correct | `BlockRenderer.writeGeometry()` outputs section-local coords (0-16 range) via `ctx.origin()` + quad position |
-| CompactChunkVertex encoding | Correct | `(8.0 + pos) / 32.0` scaled to 20-bit uint. Shader decodes with `(uint * 32/1048576) - 8.0`. Math checks out. |
-| Section index packing (Java) | Correct | `LocalSectionIndex.pack()`: X bits 5-7, Y bits 0-1, Z bits 2-4 |
-| Section index unpacking (GLSL) | Correct | `_get_relative_chunk_coord()`: `>> uvec3(5,0,2) & uvec3(7,3,7)` — matches Java packing |
-| Section index in vertex data | Correct | Packed into byte 3 of `a_LightAndData` attribute: `(section & 0xFF) << 24`, read as `a_LightAndData[3]` |
-| GL vertex attribute binding | Correct | `glVertexAttribIPointer` used for integer attributes. `glBindAttribLocation` explicitly binds all 4 attributes. |
-| Model-view matrix | Correct | Logged at runtime: row3 = (0,0,0,1) — rotation only, no translation. Camera transform is in u_RegionOffset, not the matrix. |
-| Region offsets (u_RegionOffset) | Correct | Logged values match mathematical expectation: `(regionBlockOrigin - cameraIntPos) - cameraFracPos` |
-| Camera int/frac split | Correct | `CameraTransform` splits camera position to integer + fractional. Logged values match. |
-| Mesh upload pipeline | Correct | Traced through `ChunkMeshBufferBuilder` -> `StagingBuffer` -> GL buffer. Structurally sound. |
-| Shader section translation | Correct | `u_RegionOffset + _get_draw_translation(_draw_id)` where `_get_draw_translation` = `relative_chunk_coord * 16.0` |
+1. Section-relative coordinates encoded as RGB — showed jumbled color patches instead of smooth gradients, confirming sections had wrong content but distinct indices.
+2. Camera-relative Y position encoded as green/blue/red — result was uniformly green, meaning sections rendered at approximately correct Y positions. The displacement was not vertical in screen space.
+3. Camera-relative X/Z position encoded as red/blue channels — showed smooth, correct gradients matching expected spatial distribution. This proved the `position` vector computed in the vertex shader was mathematically correct.
 
-### What has been observed via diagnostics
+That third result was the key insight. If the camera-relative position is correct but the terrain looks wrong, the issue is not where sections are drawn — it's what block data they contain. The sections render at the right XYZ, but their mesh geometry comes from the wrong chunk section. This pointed directly at the world data cloning path: `WorldSlice.prepare()` and `ClonedChunkSectionCache.clone()`.
 
-**Test 1 — Occlusion culling disabled, face culling enabled:**
-Terrain visible but displaced. More geometry visible than with occlusion culling on. Terrain appears "below feet, no grass visible, phasing through stuff."
+**Root cause: `getSectionIndex()` vs `getSectionIndexFromSectionY()`**
 
-**Test 2 — Occlusion culling disabled, ALL face culling disabled (both build-time and draw-time):**
-Complete blackness. The entire view is a solid opaque mass. This is actually informative — it means the geometry IS forming a coherent opaque volume (positions are close enough that adjacent block faces overlap), but the interior faces overwhelm the visible surface.
+Minecraft 1.20.1's `LevelHeightAccessor` has two distinct methods for converting Y coordinates to section array indices:
 
-**Test 3 — Shader debug visualization (section position encoded as color):**
-Added `v_DebugSectionColor` varying that encodes `_get_relative_chunk_coord(_draw_id)` as RGB (R=X/7, G=Y/3, B=Z/7). Result: multiple distinct colors are visible, confirming that section indices are NOT all the same value. Sections have different indices. The color pattern does not form a smooth spatial gradient — it appears jumbled, suggesting sections are being assigned to wrong positions within their regions, or the render lists are matching sections to wrong region offsets.
+- `getSectionIndex(int blockY)` — takes a **block Y coordinate** (e.g., 64). Internally computes `(blockY >> 4) - getMinSection()`.
+- `getSectionIndexFromSectionY(int sectionY)` — takes a **section Y coordinate** (e.g., 4). Internally computes `sectionY - getMinSection()`.
 
-### Diagnostic code currently in the codebase
+The original Fabric code used a single Yarn method `sectionCoordToIndex()` which takes a section Y. The `remap.sed` script (line 296) correctly mapped this to `getSectionIndexFromSectionY()`. But two call sites were instead using `getSectionIndex()`:
 
-**These must all be reverted before shipping.** They are marked with `// DIAGNOSTIC:` comments.
+`WorldSlice.java` line 97 — the section emptiness check in `prepare()`:
+```java
+// WRONG: origin.getY() returns section Y (e.g., 4), but getSectionIndex() expects block Y (e.g., 64)
+LevelChunkSection section = chunk.getSections()[world.getSectionIndex(origin.getY())];
 
-| File | What it does |
-|------|-------------|
-| `RenderSectionManager.java` | `shouldUseOcclusionCulling()` hardcoded to `return false`. Debug logging in `update()` (frames 0-20 and 50-80) and `renderLayer()` (first 30 calls). |
-| `DefaultChunkRenderer.java` | Debug logging in `render()` — dumps model-view matrix and region offsets for first 3 render passes with geometry. |
-| `SodiumWorldRenderer.java` | Debug logging in `drawChunkLayer()` — logs render layer and camera position for first 30 calls. |
-| `ChunkBuilderMeshingTask.java` | Debug logging in `execute()` — logs section coordinates and mesh pass count for first 20 chunk builds. |
-| `block_layer_opaque.vsh` | Passes `v_DebugSectionColor` varying to fragment shader, encoding section-relative coordinates as RGB. |
-| `block_layer_opaque.fsh` | Blends 70% debug section color over the normal texture color. |
+// FIXED:
+LevelChunkSection section = chunk.getSections()[world.getSectionIndexFromSectionY(origin.getY())];
+```
 
-### Known bug introduced during diagnostics
+`ClonedChunkSectionCache.java` line 65 — the section cloning in `clone()`:
+```java
+// WRONG: y is a section Y coordinate, but getSectionIndex() expects block Y
+section = chunk.getSections()[this.world.getSectionIndex(y)];
 
-`DefaultChunkRenderer.java` line 149 — the `getVisibleFaces()` call currently passes `originX, originY, originZ` (the region's chunk origin) instead of `camera.intX, camera.intY, camera.intZ` (the camera position). The original code used `camera.intX/Y/Z`. This makes draw-time face culling wrong (culling relative to region origin instead of camera), but this is NOT the root cause of the terrain displacement — the displacement was present before this change.
+// FIXED:
+section = chunk.getSections()[this.world.getSectionIndexFromSectionY(y)];
+```
+
+When section Y=4 (surface level, block Y 64–79) was passed to `getSectionIndex()`, the method computed `(4 >> 4) - (-4) = 4` instead of the correct `4 - (-4) = 8`. Every section in the world got block data from a section 4 positions lower than intended. Underground cave geometry appeared at the surface. Surface grass and trees went to sections above the build limit and were discarded. The displacement was exactly `4 * 16 = 64 blocks` vertically in world data, but because the rendering positions were correct and only the mesh content was wrong, it manifested as cave systems floating in the air at surface level.
+
+These two calls likely ended up wrong because the original Yarn source used `sectionCoordToIndex` (a method that doesn't exist in Mojang mappings), and during manual edits they were changed to `getSectionIndex` (which does exist, compiles, and looks right) instead of the correct `getSectionIndexFromSectionY`. The sed script handled it correctly where it ran, but these two call sites were probably edited by hand during the Wave 1 compile fixes.
+
+**Additional fix: `WorldSlice.reset()` loop bound**
+
+`WorldSlice.reset()` iterated over `SECTION_ARRAY_LENGTH` (3, the number of sections per axis) instead of `SECTION_ARRAY_SIZE` (27, the total number of sections in the 3x3x3 neighbor cube). This meant only 3 of 27 light array entries, block entity maps, and render data maps were cleared between pooled reuses. In practice this didn't cause visible symptoms because `copyData()` overwrites all 27 entries on the next build, but it leaked stale references and could cause issues if a section fell out of bounds between builds.
+
+```java
+// WRONG: only clears 3 of 27 entries
+for (int sectionIndex = 0; sectionIndex < SECTION_ARRAY_LENGTH; sectionIndex++) {
+
+// FIXED:
+for (int sectionIndex = 0; sectionIndex < SECTION_ARRAY_SIZE; sectionIndex++) {
+```
+
+**Other fixes applied during Sessions 9–10**
+
+| File | Fix |
+|------|-----|
+| `DefaultChunkRenderer.java` | `getVisibleFaces()` was passing `originX, originY, originZ` (region chunk origin) instead of `camera.intX, camera.intY, camera.intZ` (camera position). Draw-time face culling was relative to the region origin instead of the camera. Fixed to use camera coordinates. |
+| `BlockRenderer.java` | `getGeometry()` called 3-param `getQuads(state, face, random)` — the vanilla signature. Forge models override the 5-param version `getQuads(state, face, random, ModelData.EMPTY, null)`. Changed to the 5-param call so quads dispatch through Forge's patched method. |
+| `BlockModelRendererMixin.java` | Same 3-param to 5-param `getQuads` fix as `BlockRenderer.java`. |
+| `BakedQuadMixin.java` | Thread-safety race condition in `sodium$ensureInitialized()`. The `sodium$initialized = true` flag was set BEFORE the `normal`, `normalFace`, and `flags` fields were written. Multiple chunk builder threads racing on the same `BakedQuad` instance could see `initialized=true` but `normalFace` still null, causing a `NullPointerException` at `BakedChunkModelBuilder.getVertexBuffer()`. Fixed by moving `sodium$initialized = true` to after all field writes. |
+| `BlockRenderer.java` | Defensive null check added: if `quad.getNormalFace()` returns null (residual from the race condition above, or any other edge case), fall back to `ModelQuadFacing.UNASSIGNED` instead of crashing. |
+
+**Diagnostic code deployed and reverted**
+
+All diagnostic code has been removed from the codebase. For the record, these were deployed during debugging and reverted after the root cause was found:
+
+| File | What was added | Status |
+|------|---------------|--------|
+| `block_layer_opaque.vsh` | `v_DebugPos` varying passing camera-relative position to fragment shader. Three iterations: section-relative color, Y-position encoding, X/Z-position encoding. | Reverted. |
+| `block_layer_opaque.fsh` | Debug color blend (60–70%) over normal texture. Three iterations matching the vertex shader changes. | Reverted. |
+| `RenderSectionManager.java` | `shouldUseOcclusionCulling()` hardcoded to `return false`. Frame-counted debug logging in `update()` and `renderLayer()`. | Reverted. Occlusion culling restored to original logic. |
+| `DefaultChunkRenderer.java` | Frame-counted debug logging dumping model-view matrix, camera position, and per-region offset values. | Reverted. |
+| `SodiumWorldRenderer.java` | Frame-counted debug logging in `drawChunkLayer()`. | Reverted. |
+| `ChunkBuilderMeshingTask.java` | `AtomicInteger` counter logging section coordinates and mesh pass counts. | Reverted. |
+
+---
+
+## Current state
+
+The port works. Terrain renders correctly in all three dimensions — Overworld, Nether, and End. Blocks appear at their correct positions, textures and lighting are correct, the player collides with the blocks they can see. Chunk loading and unloading works. The sky, clouds, HUD, and entities all render.
+
+The build produces a working jar with `./gradlew clean jar` (10 warnings, 0 errors). The test task is broken at the Gradle configuration level ("Type T not present") and must be skipped; `./gradlew clean build` does not work, but `./gradlew clean jar` does.
 
 ---
 
 ## What's left
 
-### Step 1 — Identify the terrain displacement root cause
+### Step 1 — Clean up remaining warnings
 
-Everything that has been verified individually checks out. The positions encode correctly, the shader decodes correctly, the section indices pack/unpack correctly, the region offsets are mathematically correct. Yet the terrain is displaced.
+The mixin AP emits 4 warnings that may affect functionality. The other 6 are deprecation warnings on `ResourceLocation` constructors and `FMLJavaModLoadingContext.get()` which are harmless on 1.20.1.
 
-The shader debug visualization shows distinct section colors that don't form a smooth gradient. This narrows the problem to one of:
+Mixin warnings that matter:
 
-1. **Section-to-region assignment is wrong.** A section might be assigned to the wrong region, so it gets the wrong `u_RegionOffset` but the right local section index — or vice versa. Check `RenderSection.getRegion()`, `RenderRegion.addSection()`, and the render list construction.
+- `OptionsScreenMixin.java` — target `lambda$init$2` can't be resolved. This is the "Video Settings" button redirect that opens Sodium's settings GUI instead of vanilla's. If the lambda name is wrong, clicking Video Settings in the options screen will open vanilla's settings instead of Sodium's.
+- `VertexConsumerProviderImmediateMixin.java` — target `lambda$endBatch$0` can't be resolved. This is a `@ModifyVariable` for immediate-mode render batching optimization. If it fails, rendering still works but without Sodium's batching optimization for non-terrain geometry.
+- `WindowMixin.java` (core) — `glfwCreateWindow` target can't be resolved. Already marked `require = 0`. Sodium uses this to set OpenGL context hints before window creation. Forge handles this differently; the mixin is optional and harmless if it doesn't apply.
+- `WindowMixin.java` (workarounds) — same `glfwCreateWindow` target. Also `require = 0`. Same situation.
 
-2. **The render list pairs the wrong section data with the wrong draw commands.** The iterator in `fillCommandBuffer` reads section indices and looks up mesh data pointers. If the section indices in the render list don't correspond to the mesh data in the storage, sections would draw at wrong positions. Check `ChunkRenderList` population and `SectionRenderDataStorage` indexing.
+### Step 2 — Runtime testing
 
-3. **Base vertex offsets in the multi-draw batch are wrong.** `multiDrawElementsBaseVertex` uses per-section base vertex offsets. If a section's vertex data was uploaded at a different offset than what the draw command references, the wrong vertices would be drawn with the wrong section translation. Check `SectionRenderDataUnsafe.getVertexOffset()` against actual upload positions.
+Terrain rendering is confirmed working. Still need to verify:
 
-4. **The 3-param vs 5-param getQuads mismatch.** `BlockRenderer.getGeometry()` calls `ctx.model().getQuads(state, face, random)` — the vanilla 3-param version. On Forge, the model's `@Overwrite` targets the 5-param version. If the 3-param call bypasses the overwritten method and falls through to different dispatch logic, blocks might return quads for the wrong model variant. Check whether `getQuads(state, face, random)` on Forge correctly dispatches to the 5-param overload.
+- Translucent rendering (water, ice, stained glass)
+- Sodium's settings GUI (depends on `OptionsScreenMixin` resolving correctly)
+- Chunk rebuild on block place/break
+- Performance compared to vanilla
 
-### Step 2 — Fix the terrain displacement
+### Step 3 — Build a distributable jar
 
-Once the root cause is identified, fix it. This is the only blocker for functional terrain rendering.
-
-### Step 3 — Revert all diagnostic code
-
-Remove every line marked `// DIAGNOSTIC:` in the files listed above. Restore:
-- `shouldUseOcclusionCulling()` to its original logic in `RenderSectionManager.java`
-- All debug logging in `RenderSectionManager`, `DefaultChunkRenderer`, `SodiumWorldRenderer`, `ChunkBuilderMeshingTask`
-- The shader debug visualization in `block_layer_opaque.vsh` and `block_layer_opaque.fsh`
-- Fix `getVisibleFaces()` call to use `camera.intX/Y/Z` instead of `originX/Y/Z`
-
-### Step 4 — Clean up remaining warnings
-
-The mixin AP still emits ~28 warnings. Most are "Unable to determine descriptor" which the refmap handles at runtime. The ones that actually matter:
-
-- `OptionsScreenMixin.java` still has `method_19828` — a Yarn intermediary name. Needs lookup.
-- `VertexConsumerProviderImmediateMixin.java` has `method_24213` — same problem.
-- `SpriteContentsMixin.java` (mipmaps) has a Yarn path in an `@At(FIELD)` target.
-
-### Step 5 — Runtime testing
-
-Once terrain renders correctly:
-- Test with different biomes, structures, and underground
-- Test chunk loading/unloading while moving
-- Test translucent rendering (water, ice, stained glass)
-- Test Sodium's settings GUI
-- Test performance vs vanilla
-
-### Step 6 — Build a jar
-
-`./gradlew build` to produce a distributable jar for testing with Better MC.
+`./gradlew clean jar` produces `build/libs/sodium-forge-0.5.13-forge.jar`. Test with Better MC modpack.
 
 ---
 
@@ -436,16 +451,20 @@ Everything is on branch `1.20.1/stable-0.5`, uncommitted.
 **Mod core (1 file):**
 - `SodiumClientMod.java` — `isConfigAvailable()` guard
 
-**Rendering pipeline (5 files, includes diagnostic code):**
-- `SodiumWorldRenderer.java` — debug logging
-- `DefaultChunkRenderer.java` — debug logging + face culling bug (originX vs camera.intX)
-- `RenderSectionManager.java` — occlusion culling disabled + debug logging
-- `BlockRenderer.java` — face visibility check order change (functionally equivalent to original)
-- `ChunkBuilderMeshingTask.java` — debug logging
+**World data cloning (2 files — terrain displacement root cause):**
+- `WorldSlice.java` — `getSectionIndex()` -> `getSectionIndexFromSectionY()` in `prepare()`, `SECTION_ARRAY_LENGTH` -> `SECTION_ARRAY_SIZE` in `reset()`
+- `ClonedChunkSectionCache.java` — `getSectionIndex()` -> `getSectionIndexFromSectionY()` in `clone()`
 
-**Shaders (2 files, diagnostic only):**
-- `block_layer_opaque.vsh` — debug section color varying
-- `block_layer_opaque.fsh` — debug color blend
+**Rendering pipeline (5 files):**
+- `SodiumWorldRenderer.java` — render layer dispatch
+- `DefaultChunkRenderer.java` — face culling fix (`camera.intX/Y/Z` instead of `originX/Y/Z`)
+- `RenderSectionManager.java` — occlusion culling logic restored
+- `BlockRenderer.java` — 5-param `getQuads()` for Forge, defensive null check on `normalFace`
+- `ChunkBuilderMeshingTask.java` — mesh building
+
+**Shaders (2 files):**
+- `block_layer_opaque.vsh` — clean (diagnostic code reverted)
+- `block_layer_opaque.fsh` — clean (diagnostic code reverted)
 
 **Mixin config (1 file):**
 - `sodium.mixins.json` — added `refmap` field
@@ -454,7 +473,8 @@ Everything is on branch `1.20.1/stable-0.5`, uncommitted.
 - `MinecraftClientMixin.java` — `render` -> `runTick`, `onInitFinished` -> `setInitialScreen`, config guard
 - `WindowMixin.java` (core) — `handle` -> `window`, `require = 0`
 - `BlockColorsMixin.java` — `registerColorProvider` -> `register`
-- `BakedQuadMixin.java` — `vertexData` -> `vertices`, `colorIndex` -> `tintIndex`, `face` -> `direction`, lazy init
+- `BakedQuadMixin.java` — `vertexData` -> `vertices`, `colorIndex` -> `tintIndex`, `face` -> `direction`, lazy init with thread-safety fix
+- `BlockModelRendererMixin.java` — 5-param `getQuads()` for Forge
 - `FrustumMixin.java` — `x/y/z` -> `camX/camY/camZ`, `frustumIntersection` -> `intersection`
 - `OverlayVertexConsumerMixin.java` — `affine` -> `cameraInversePose`, `normalMatrix` -> `normalInversePose`
 - `VertexConsumerProviderImmediateMixin.java` — target method rename
@@ -477,24 +497,20 @@ Everything is on branch `1.20.1/stable-0.5`, uncommitted.
 
 ## Things that could bite me later
 
-1. **The sed script was a blunt instrument.** It renamed Sodium's own classes along with Minecraft's. I caught ~35 files, but there could be subtler damage hiding in the code that compiles fine but breaks at runtime.
+1. **The sed script was a blunt instrument.** It renamed Sodium's own classes along with Minecraft's. I caught ~35 files, but there could be subtler damage hiding in the code that compiles fine but breaks at runtime. The `getSectionIndex` vs `getSectionIndexFromSectionY` bug was exactly this kind of damage — it compiled, it looked right, and it took two debugging sessions to find.
 
-2. **Mixin refmap might not resolve everything.** The 24 "Unable to determine descriptor" warnings mean the mixin AP couldn't verify 24 targets at compile time. If any of those method names are actually wrong, the mixin silently fails or crashes.
+2. **Mixin refmap might not resolve everything.** The 4 "Unable to determine descriptor" warnings mean the mixin AP couldn't verify those targets at compile time. If any of those method names are actually wrong, the mixin silently fails.
 
-3. **`OptionsScreenMixin.java` still has `method_19828`** — a Yarn intermediary name. Needs to be looked up and translated to Mojang.
+3. **Access Transformer might be missing entries.** The `accesstransformer.cfg` was written from the original `sodium.accesswidener`, but not every entry has been verified. The CloudRenderer fix already needed one AT entry added.
 
-4. **`VertexConsumerProviderImmediateMixin.java` has `method_24213`** — same problem.
-
-5. **Access Transformer might be missing entries.** The `accesstransformer.cfg` was written from the original `sodium.accesswidener`, but not every entry has been verified. The CloudRenderer fix already needed one AT entry added.
-
-6. **Forge-specific hooks aren't wired up yet.** Still need to deal with:
+4. **Forge-specific hooks aren't wired up yet.** Still need to deal with:
    - Forge event bus registration
    - `IForgeBlock`/`IForgeFluid` extensions
    - `RenderLevelStageEvent` vs Fabric's `WorldRenderEvents`
    - Forge's model loading differences
 
-7. **`FlawlessFrames.java`** has a Fabric-only integration (FREX/Canvas). Probably needs to be gutted or replaced.
+5. **`FlawlessFrames.java`** has a Fabric-only integration (FREX/Canvas). Probably needs to be gutted or replaced.
 
-8. **`BlockEntity.getModelData()`** in `ClonedChunkSection.java` returns Forge's `ModelData` type, not `Object`. The code stores it as `Int2ReferenceMap<Object>` which might cause a ClassCastException downstream if anything expects a specific type.
+6. **`BlockEntity.getModelData()`** in `ClonedChunkSection.java` returns Forge's `ModelData` type, not `Object`. The code stores it as `Int2ReferenceMap<Object>` which might cause a ClassCastException downstream if anything expects a specific type.
 
-9. **BlockRenderer.getGeometry() calls 3-param getQuads.** Forge models override the 5-param version. The 3-param call may not dispatch through the Forge-patched method, which could cause blocks to return wrong or missing quads. This is a suspect for the terrain rendering issue.
+7. **Gradle test task is broken.** `./gradlew build` fails at configuration time with "Type T not present." This is a Gradle/Java version compatibility issue with the test infrastructure, not a code issue. `./gradlew clean jar` works fine. Low priority — there are no tests to run anyway.

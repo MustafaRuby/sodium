@@ -17,6 +17,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 import net.minecraft.util.RandomSource;
+import net.minecraftforge.client.model.data.ModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -54,7 +55,7 @@ public class BlockModelRendererMixin {
 
         for (Direction direction : DirectionUtil.ALL_DIRECTIONS) {
             random.setSeed(42L);
-            List<BakedQuad> quads = bakedModel.getQuads(blockState, direction, random);
+            List<BakedQuad> quads = bakedModel.getQuads(blockState, direction, random, ModelData.EMPTY, null);
 
             if (!quads.isEmpty()) {
                 renderQuads(entry, writer, defaultColor, quads, light, overlay);
@@ -62,7 +63,7 @@ public class BlockModelRendererMixin {
         }
 
         random.setSeed(42L);
-        List<BakedQuad> quads = bakedModel.getQuads(blockState, null, random);
+        List<BakedQuad> quads = bakedModel.getQuads(blockState, null, random, ModelData.EMPTY, null);
 
         if (!quads.isEmpty()) {
             renderQuads(entry, writer, defaultColor, quads, light, overlay);

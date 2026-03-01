@@ -233,13 +233,7 @@ public class SodiumWorldRenderer {
     /**
      * Performs a render pass for the given {@link RenderType} and draws all visible chunks for it.
      */
-    private static int drawDebugCounter = 0;
-
     public void drawChunkLayer(RenderType renderLayer, ChunkRenderMatrices matrices, double x, double y, double z) {
-        if (drawDebugCounter++ < 30) {
-            org.slf4j.LoggerFactory.getLogger("Sodium-Debug").info("drawChunkLayer called with renderLayer={}, camera=({},{},{})",
-                renderLayer, x, y, z);
-        }
         if (renderLayer == RenderType.solid()) {
             this.renderSectionManager.renderLayer(matrices, DefaultTerrainRenderPasses.SOLID, x, y, z);
             this.renderSectionManager.renderLayer(matrices, DefaultTerrainRenderPasses.CUTOUT, x, y, z);

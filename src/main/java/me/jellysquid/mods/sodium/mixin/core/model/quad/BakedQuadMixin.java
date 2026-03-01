@@ -52,14 +52,18 @@ public class BakedQuadMixin implements BakedQuadView {
      * Lazily initialize Sodium's quad data. Forge patches BakedQuad with additional
      * constructors that the mixin @Inject can't reliably target, so we compute
      * on first access instead.
+     *
+     * IMPORTANT: The initialized flag must be set LAST to avoid a race condition
+     * where another thread sees initialized=true but the fields are still null.
+     * Redundant computation by multiple threads is safe (idempotent).
      */
     @Unique
     private void sodium$ensureInitialized() {
         if (!this.sodium$initialized) {
-            this.sodium$initialized = true;
             this.normal = ModelQuadUtil.calculateNormal(this);
             this.normalFace = ModelQuadUtil.findNormalFace(this.normal);
             this.flags = ModelQuadFlags.getQuadFlags(this, this.direction);
+            this.sodium$initialized = true;
         }
     }
 

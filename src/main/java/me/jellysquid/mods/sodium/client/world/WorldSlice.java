@@ -94,7 +94,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
 
     public static ChunkRenderContext prepare(Level world, SectionPos origin, ClonedChunkSectionCache sectionCache) {
         LevelChunk chunk = world.getChunk(origin.getX(), origin.getZ());
-        LevelChunkSection section = chunk.getSections()[world.getSectionIndex(origin.getY())];
+        LevelChunkSection section = chunk.getSections()[world.getSectionIndexFromSectionY(origin.getY())];
 
         // If the chunk section is absent or empty, simply terminate now. There will never be anything in this chunk
         // section to render, so we need to signal that a chunk render task shouldn't created. This saves a considerable
@@ -217,7 +217,7 @@ public final class WorldSlice implements BlockAndTintGetter, BiomeColorView {
         // erase any pointers to resources we no longer need
         // no point in cleaning the pre-allocated arrays (such as block state storage) since we hold the
         // only reference.
-        for (int sectionIndex = 0; sectionIndex < SECTION_ARRAY_LENGTH; sectionIndex++) {
+        for (int sectionIndex = 0; sectionIndex < SECTION_ARRAY_SIZE; sectionIndex++) {
             Arrays.fill(this.lightArrays[sectionIndex], null);
 
             this.blockEntityArrays[sectionIndex] = null;

@@ -7,7 +7,6 @@
 
 out vec4 v_Color;
 out vec2 v_TexCoord;
-out vec3 v_DebugSectionColor; // DIAGNOSTIC: section position debug color
 
 out float v_MaterialMipBias;
 #ifdef USE_FRAGMENT_DISCARD
@@ -50,10 +49,6 @@ void main() {
     // Add the light color to the vertex color, and pass the texture coordinates to the fragment shader
     v_Color = _vert_color * texture(u_LightTex, _vert_tex_light_coord);
     v_TexCoord = (_vert_tex_diffuse_coord_bias * u_TexCoordShrink) + _vert_tex_diffuse_coord; // FMA for precision
-
-    // DIAGNOSTIC: Encode section relative coords as color for debug visualization
-    uvec3 sectionCoord = _get_relative_chunk_coord(_draw_id);
-    v_DebugSectionColor = vec3(float(sectionCoord.x) / 7.0, float(sectionCoord.y) / 3.0, float(sectionCoord.z) / 7.0);
 
     v_MaterialMipBias = _material_mip_bias(_material_params);
 #ifdef USE_FRAGMENT_DISCARD
