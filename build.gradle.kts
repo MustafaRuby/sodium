@@ -94,4 +94,6 @@ tasks.jar {
     }
 
     from("${rootProject.projectDir}/LICENSE.md")
+
+    finalizedBy("reobfJar")
 }

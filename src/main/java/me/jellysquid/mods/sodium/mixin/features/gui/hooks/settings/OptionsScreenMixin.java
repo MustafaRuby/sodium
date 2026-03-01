@@ -15,7 +15,7 @@ public class OptionsScreenMixin extends Screen {
         super(title);
     }
 
-    @Inject(method = "lambda$init$2", at = @At("HEAD"), cancellable = true)
+    @Inject(method = {"lambda$init$2", "m_260753_"}, at = @At("HEAD"), cancellable = true, remap = false)
     private void open(CallbackInfoReturnable<Screen> ci) {
         ci.setReturnValue(SodiumOptionsGUI.createScreen(this));
     }

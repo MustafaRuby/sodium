@@ -23,7 +23,7 @@ public class VertexConsumerProviderImmediateMixin {
         }
     }
 
-    @ModifyVariable(method = "lambda$endBatch$0", at = @At(value = "LOAD", ordinal = 0))
+    @ModifyVariable(method = {"lambda$endBatch$0", "m_109916_"}, at = @At(value = "LOAD", ordinal = 0), remap = false)
     private VertexConsumer changeComparedVertexConsumer(VertexConsumer input) {
         if (input instanceof SodiumBufferBuilder replacement) {
             return replacement.getOriginalBufferBuilder();

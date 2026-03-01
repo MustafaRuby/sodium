@@ -1,0 +1,424 @@
+{
+  "mappings": {
+    "me/jellysquid/mods/sodium/mixin/features/render/world/clouds/WorldRendererMixin": {
+      "allChanged": "Lnet/minecraft/client/renderer/LevelRenderer;m_109818_()V",
+      "onResourceManagerReload(Lnet/minecraft/server/packs/resources/ResourceManager;)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_6213_(Lnet/minecraft/server/packs/resources/ResourceManager;)V",
+      "close": "Lnet/minecraft/client/renderer/LevelRenderer;close()V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteAtlasTextureMixin": {
+      "getSprite": "Lnet/minecraft/client/renderer/texture/TextureAtlas;m_118316_(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/model/block/BlockModelRendererMixin": {
+      "renderModel(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/client/resources/model/BakedModel;FFFII)V": "Lnet/minecraft/client/renderer/block/ModelBlockRenderer;m_111067_(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/client/resources/model/BakedModel;FFFII)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/options/overlays/InGameHudMixin": {
+      "Lnet/minecraft/client/Minecraft;useFancyGraphics()Z": "Lnet/minecraft/client/Minecraft;m_91405_()Z",
+      "render": "Lnet/minecraft/client/gui/Gui;m_280421_(Lnet/minecraft/client/gui/GuiGraphics;F)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/SpriteContentsAnimatorImplMixin": {
+      "tickAndUpload": "Lnet/minecraft/client/renderer/texture/SpriteContents$Ticker;m_247697_(II)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/options/weather/WorldRendererMixin": {
+      "renderSnowAndRain": "Lnet/minecraft/client/renderer/LevelRenderer;m_109703_(Lnet/minecraft/client/renderer/LightTexture;FDDD)V",
+      "Lnet/minecraft/client/Minecraft;useFancyGraphics()Z": "Lnet/minecraft/client/Minecraft;m_91405_()Z"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/world/sky/BackgroundRendererMixin": {
+      "setupColor": "Lnet/minecraft/client/renderer/FogRenderer;m_109018_(Lnet/minecraft/client/Camera;FLnet/minecraft/client/multiplayer/ClientLevel;IF)V",
+      "Lnet/minecraft/util/CubicSampler;gaussianSampleVec3(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/util/CubicSampler;m_130038_(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/model/item/ItemRendererMixin": {
+      "renderModelLists": "Lnet/minecraft/client/renderer/entity/ItemRenderer;m_115189_(Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/item/ItemStack;IILcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/gui/hooks/console/GameRendererMixin": {
+      "Lnet/minecraft/client/gui/GuiGraphics;flush()V": "Lnet/minecraft/client/gui/GuiGraphics;m_280262_()V",
+      "render": "Lnet/minecraft/client/renderer/GameRenderer;m_109093_(FJZ)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/entity/ModelPartMixin": {
+      "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V": "Lnet/minecraft/client/model/geom/ModelPart;m_104306_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/world/map/ClientPlayNetworkHandlerMixin": {
+      "applyLightData": "Lnet/minecraft/client/multiplayer/ClientPacketListener;m_194248_(IILnet/minecraft/network/protocol/game/ClientboundLightUpdatePacketData;)V",
+      "handleForgetLevelChunk": "Lnet/minecraft/client/multiplayer/ClientPacketListener;m_5729_(Lnet/minecraft/network/protocol/game/ClientboundForgetLevelChunkPacket;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/VertexBufferMixin": {
+      "drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V": "Lcom/mojang/blaze3d/vertex/VertexBuffer;m_253207_(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAnimatorImplAccessor": {
+      "subFrame": "f_244511_:I",
+      "animationInfo": "f_243921_:Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;",
+      "frame": "f_244631_:I"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/NativeImageBackedTextureMixin": {
+      "<init>(Lcom/mojang/blaze3d/platform/NativeImage;)V": "Lnet/minecraft/client/renderer/texture/DynamicTexture;<init>(Lcom/mojang/blaze3d/platform/NativeImage;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/model/colors/ItemColorsMixin": {
+      "register": "Lnet/minecraft/client/color/item/ItemColors;m_92689_(Lnet/minecraft/client/color/item/ItemColor;[Lnet/minecraft/world/level/ItemLike;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAccessor": {
+      "byMipLevel": "f_243731_:[Lcom/mojang/blaze3d/platform/NativeImage;"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/gui/DownloadingTerrainScreenMixin": {
+      "tick": "Lnet/minecraft/client/gui/screens/ReceivingLevelScreen;m_86600_()V",
+      "Lnet/minecraft/client/player/LocalPlayer;blockPosition()Lnet/minecraft/core/BlockPos;": "Lnet/minecraft/client/player/LocalPlayer;m_20183_()Lnet/minecraft/core/BlockPos;"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteContentsAnimationAccessor": {
+      "frames": "f_243714_:Ljava/util/List;"
+    },
+    "me/jellysquid/mods/sodium/mixin/workarounds/event_loop/RenderSystemMixin": {
+      "flipFrame": "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(J)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/world/sky/WorldRendererMixin": {
+      "renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_202423_(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/workarounds/context_creation/WindowMixin": {
+      "updateDisplay": "Lcom/mojang/blaze3d/platform/Window;m_85435_()V"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/world/map/ClientChunkManagerMixin": {
+      "drop": "Lnet/minecraft/client/multiplayer/ClientChunkCache;m_104455_(II)V",
+      "Lnet/minecraft/client/multiplayer/ClientLevel;onChunkLoaded(Lnet/minecraft/world/level/ChunkPos;)V": "Lnet/minecraft/client/multiplayer/ClientLevel;m_171649_(Lnet/minecraft/world/level/ChunkPos;)V",
+      "replaceWithPacketData": "Lnet/minecraft/client/multiplayer/ClientChunkCache;m_194116_(IILnet/minecraft/network/FriendlyByteBuf;Lnet/minecraft/nbt/CompoundTag;Ljava/util/function/Consumer;)Lnet/minecraft/world/level/chunk/LevelChunk;",
+      "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;replace(ILnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/world/level/chunk/LevelChunk;": "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;m_104487_(ILnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/world/level/chunk/LevelChunk;"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/DrawContextMixin": {
+      "blit(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;FFFF)V": "Lnet/minecraft/client/gui/GuiGraphics;m_280565_(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;FFFF)V",
+      "blit(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V": "Lnet/minecraft/client/gui/GuiGraphics;m_280159_(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteContentsAnimatorImplMixin": {
+      "tickAndUpload": "Lnet/minecraft/client/renderer/texture/SpriteContents$Ticker;m_247697_(II)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/compositing/FramebufferMixin": {
+      "_blitToScreen": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83971_(IIZ)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/entity/cull/EntityRendererMixin": {
+      "Lnet/minecraft/client/renderer/culling/Frustum;isVisible(Lnet/minecraft/world/phys/AABB;)Z": "Lnet/minecraft/client/renderer/culling/Frustum;m_113029_(Lnet/minecraft/world/phys/AABB;)Z",
+      "shouldRender": "Lnet/minecraft/client/renderer/entity/EntityRenderer;m_5523_(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/MinecraftClientMixin": {
+      "setInitialScreen": "Lnet/minecraft/client/Minecraft;m_278684_(Lcom/mojang/realmsclient/client/RealmsClient;Lnet/minecraft/server/packs/resources/ReloadInstance;Lnet/minecraft/client/main/GameConfig$QuickPlayData;)V",
+      "reloadResourcePacks()Ljava/util/concurrent/CompletableFuture;": "Lnet/minecraft/client/Minecraft;m_91391_()Ljava/util/concurrent/CompletableFuture;",
+      "runTick": "Lnet/minecraft/client/Minecraft;m_91383_(Z)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/particle/BillboardParticleMixin": {
+      "render": "Lnet/minecraft/client/particle/SingleQuadParticle;m_5744_(Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/client/Camera;F)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/PlayerSkinTextureMixin": {
+      "loadCallback": "Lnet/minecraft/client/renderer/texture/HttpTexture;m_118010_(Lcom/mojang/blaze3d/platform/NativeImage;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/NativeImageAccessor": {
+      "pixels": "f_84964_:J"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/render/immediate/consumer/VertexConsumerProviderImmediateMixin": {
+      "getBuffer": "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;m_6299_(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/options/render_layers/RenderLayersMixin": {
+      "setFancy": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;m_109291_(Z)V",
+      "getChunkRenderType": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;m_109282_(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/RenderType;",
+      "getMovingBlockRenderType": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;m_109293_(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/RenderType;",
+      "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;renderCutout:Z": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;f_109277_:Z"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/render/world/WorldRendererMixin": {
+      "needsUpdate": "Lnet/minecraft/client/renderer/LevelRenderer;m_109826_()V",
+      "renderLevel": "Lnet/minecraft/client/renderer/LevelRenderer;m_109599_(Lcom/mojang/blaze3d/vertex/PoseStack;FJZLnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/GameRenderer;Lnet/minecraft/client/renderer/LightTexture;Lorg/joml/Matrix4f;)V",
+      "Lnet/minecraft/client/renderer/LevelRenderer;globalBlockEntities:Ljava/util/Set;": "Lnet/minecraft/client/renderer/LevelRenderer;f_109468_:Ljava/util/Set;",
+      "allChanged()V": "Lnet/minecraft/client/renderer/LevelRenderer;m_109818_()V",
+      "Lnet/minecraft/client/Options;getEffectiveRenderDistance()I": "Lnet/minecraft/client/Options;m_193772_()I",
+      "setLevel": "Lnet/minecraft/client/renderer/LevelRenderer;m_109701_(Lnet/minecraft/client/multiplayer/ClientLevel;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/gui/font/GlyphRendererMixin": {
+      "render": "Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;m_5626_(ZFFLorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFI)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/shader/uniform/ShaderProgramMixin": {
+      "apply": "Lnet/minecraft/client/renderer/ShaderInstance;m_173363_()V",
+      "Lcom/mojang/blaze3d/shaders/Uniform;glGetUniformLocation(ILjava/lang/CharSequence;)I": "Lcom/mojang/blaze3d/shaders/Uniform;m_85624_(ILjava/lang/CharSequence;)I"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/render/texture/SpriteAtlasTextureAccessor": {
+      "width": "f_276067_:I",
+      "height": "f_276070_:I"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/SpriteContentsInvoker": {
+      "upload": "m_247381_(IIII[Lcom/mojang/blaze3d/platform/NativeImage;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteContentsAnimationFrameAccessor": {
+      "time": "f_244553_:I"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/render/immediate/consumer/BufferBuilderMixin": {
+      "Lcom/mojang/blaze3d/vertex/BufferBuilder;format:Lcom/mojang/blaze3d/vertex/VertexFormat;": "Lcom/mojang/blaze3d/vertex/BufferBuilder;f_85658_:Lcom/mojang/blaze3d/vertex/VertexFormat;",
+      "discard": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_85730_()V",
+      "switchFormat": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_85704_(Lcom/mojang/blaze3d/vertex/VertexFormat;)V",
+      "clear": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_85729_()V",
+      "begin": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_166779_(Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;Lcom/mojang/blaze3d/vertex/VertexFormat;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/gui/outlines/WorldRendererMixin": {
+      "renderLineBox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;DDDDDDFFFFFFF)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_109621_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;DDDDDDFFFFFFF)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/world/sky/ClientWorldMixin": {
+      "getSkyColor": "Lnet/minecraft/client/multiplayer/ClientLevel;m_171660_(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;",
+      "Lnet/minecraft/util/CubicSampler;gaussianSampleVec3(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/util/CubicSampler;m_130038_(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/BlockModelRendererMixin": {
+      "putQuadData": "Lnet/minecraft/client/renderer/block/ModelBlockRenderer;m_111023_(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;FFFFIIIII)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/NativeImageMixin": {
+      "upload(IIIIIIIZZZZ)V": "Lcom/mojang/blaze3d/platform/NativeImage;m_85013_(IIIIIIIZZZZ)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/VertexFormatMixin": {
+      "clearBufferState": "Lcom/mojang/blaze3d/vertex/VertexFormat;m_86024_()V",
+      "setupBufferState": "Lcom/mojang/blaze3d/vertex/VertexFormat;m_166912_()V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/gui/hooks/debug/DebugHudMixin": {
+      "getSystemInformation": "Lnet/minecraft/client/gui/components/DebugScreenOverlay;m_94078_()Ljava/util/List;"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/render/VertexFormatAccessor": {
+      "offsets": "f_86013_:Lit/unimi/dsi/fastutil/ints/IntList;"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAnimationAccessor": {
+      "frames": "f_243714_:Ljava/util/List;",
+      "frameRowSize": "f_244229_:I"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/AbstractTextureMixin": {
+      "bind": "Lnet/minecraft/client/renderer/texture/AbstractTexture;m_117966_()V",
+      "releaseId": "Lnet/minecraft/client/renderer/texture/AbstractTexture;m_117964_()V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/render/entity/shadows/EntityRenderDispatcherMixin": {
+      "renderBlockShadow": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_277056_(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;DDDFF)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/BufferRendererMixin": {
+      "drawWithShader": "Lcom/mojang/blaze3d/vertex/BufferUploader;m_231202_(Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/TextureManagerMixin": {
+      "reload": "Lnet/minecraft/client/renderer/texture/TextureManager;m_5540_(Lnet/minecraft/server/packs/resources/PreparableReloadListener$PreparationBarrier;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/util/profiling/ProfilerFiller;Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;",
+      "_bind": "Lnet/minecraft/client/renderer/texture/TextureManager;m_118519_(Lnet/minecraft/resources/ResourceLocation;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/core/model/colors/BlockColorsMixin": {
+      "register": "Lnet/minecraft/client/color/block/BlockColors;m_92589_(Lnet/minecraft/client/color/block/BlockColor;[Lnet/minecraft/world/level/block/Block;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteBillboardParticleMixin": {
+      "setSprite(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V": "Lnet/minecraft/client/particle/TextureSheetParticle;m_108337_(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/SpriteAtlasTextureMixin": {
+      "tick": "Lnet/minecraft/client/renderer/texture/TextureAtlas;m_7673_()V"
+    },
+    "me/jellysquid/mods/sodium/mixin/debug/checks/FramebufferMixin": {
+      "blitToScreen(IIZ)V": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83957_(IIZ)V",
+      "resize": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83941_(IIZ)V",
+      "unbindWrite": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83970_()V",
+      "bindWrite": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83947_(Z)V"
+    },
+    "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAnimationFrameAccessor": {
+      "index": "f_243751_:I",
+      "time": "f_244553_:I"
+    }
+  },
+  "data": {
+    "searge": {
+      "me/jellysquid/mods/sodium/mixin/features/render/world/clouds/WorldRendererMixin": {
+        "allChanged": "Lnet/minecraft/client/renderer/LevelRenderer;m_109818_()V",
+        "onResourceManagerReload(Lnet/minecraft/server/packs/resources/ResourceManager;)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_6213_(Lnet/minecraft/server/packs/resources/ResourceManager;)V",
+        "close": "Lnet/minecraft/client/renderer/LevelRenderer;close()V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteAtlasTextureMixin": {
+        "getSprite": "Lnet/minecraft/client/renderer/texture/TextureAtlas;m_118316_(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/model/block/BlockModelRendererMixin": {
+        "renderModel(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/client/resources/model/BakedModel;FFFII)V": "Lnet/minecraft/client/renderer/block/ModelBlockRenderer;m_111067_(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/client/resources/model/BakedModel;FFFII)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/options/overlays/InGameHudMixin": {
+        "Lnet/minecraft/client/Minecraft;useFancyGraphics()Z": "Lnet/minecraft/client/Minecraft;m_91405_()Z",
+        "render": "Lnet/minecraft/client/gui/Gui;m_280421_(Lnet/minecraft/client/gui/GuiGraphics;F)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/SpriteContentsAnimatorImplMixin": {
+        "tickAndUpload": "Lnet/minecraft/client/renderer/texture/SpriteContents$Ticker;m_247697_(II)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/options/weather/WorldRendererMixin": {
+        "renderSnowAndRain": "Lnet/minecraft/client/renderer/LevelRenderer;m_109703_(Lnet/minecraft/client/renderer/LightTexture;FDDD)V",
+        "Lnet/minecraft/client/Minecraft;useFancyGraphics()Z": "Lnet/minecraft/client/Minecraft;m_91405_()Z"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/world/sky/BackgroundRendererMixin": {
+        "setupColor": "Lnet/minecraft/client/renderer/FogRenderer;m_109018_(Lnet/minecraft/client/Camera;FLnet/minecraft/client/multiplayer/ClientLevel;IF)V",
+        "Lnet/minecraft/util/CubicSampler;gaussianSampleVec3(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/util/CubicSampler;m_130038_(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/model/item/ItemRendererMixin": {
+        "renderModelLists": "Lnet/minecraft/client/renderer/entity/ItemRenderer;m_115189_(Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/item/ItemStack;IILcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/gui/hooks/console/GameRendererMixin": {
+        "Lnet/minecraft/client/gui/GuiGraphics;flush()V": "Lnet/minecraft/client/gui/GuiGraphics;m_280262_()V",
+        "render": "Lnet/minecraft/client/renderer/GameRenderer;m_109093_(FJZ)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/entity/ModelPartMixin": {
+        "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V": "Lnet/minecraft/client/model/geom/ModelPart;m_104306_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/world/map/ClientPlayNetworkHandlerMixin": {
+        "applyLightData": "Lnet/minecraft/client/multiplayer/ClientPacketListener;m_194248_(IILnet/minecraft/network/protocol/game/ClientboundLightUpdatePacketData;)V",
+        "handleForgetLevelChunk": "Lnet/minecraft/client/multiplayer/ClientPacketListener;m_5729_(Lnet/minecraft/network/protocol/game/ClientboundForgetLevelChunkPacket;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/VertexBufferMixin": {
+        "drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V": "Lcom/mojang/blaze3d/vertex/VertexBuffer;m_253207_(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAnimatorImplAccessor": {
+        "subFrame": "f_244511_:I",
+        "animationInfo": "f_243921_:Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;",
+        "frame": "f_244631_:I"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/NativeImageBackedTextureMixin": {
+        "<init>(Lcom/mojang/blaze3d/platform/NativeImage;)V": "Lnet/minecraft/client/renderer/texture/DynamicTexture;<init>(Lcom/mojang/blaze3d/platform/NativeImage;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/model/colors/ItemColorsMixin": {
+        "register": "Lnet/minecraft/client/color/item/ItemColors;m_92689_(Lnet/minecraft/client/color/item/ItemColor;[Lnet/minecraft/world/level/ItemLike;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAccessor": {
+        "byMipLevel": "f_243731_:[Lcom/mojang/blaze3d/platform/NativeImage;"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/gui/DownloadingTerrainScreenMixin": {
+        "tick": "Lnet/minecraft/client/gui/screens/ReceivingLevelScreen;m_86600_()V",
+        "Lnet/minecraft/client/player/LocalPlayer;blockPosition()Lnet/minecraft/core/BlockPos;": "Lnet/minecraft/client/player/LocalPlayer;m_20183_()Lnet/minecraft/core/BlockPos;"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteContentsAnimationAccessor": {
+        "frames": "f_243714_:Ljava/util/List;"
+      },
+      "me/jellysquid/mods/sodium/mixin/workarounds/event_loop/RenderSystemMixin": {
+        "flipFrame": "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(J)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/world/sky/WorldRendererMixin": {
+        "renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_202423_(Lcom/mojang/blaze3d/vertex/PoseStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/Camera;ZLjava/lang/Runnable;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/workarounds/context_creation/WindowMixin": {
+        "updateDisplay": "Lcom/mojang/blaze3d/platform/Window;m_85435_()V"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/world/map/ClientChunkManagerMixin": {
+        "drop": "Lnet/minecraft/client/multiplayer/ClientChunkCache;m_104455_(II)V",
+        "Lnet/minecraft/client/multiplayer/ClientLevel;onChunkLoaded(Lnet/minecraft/world/level/ChunkPos;)V": "Lnet/minecraft/client/multiplayer/ClientLevel;m_171649_(Lnet/minecraft/world/level/ChunkPos;)V",
+        "replaceWithPacketData": "Lnet/minecraft/client/multiplayer/ClientChunkCache;m_194116_(IILnet/minecraft/network/FriendlyByteBuf;Lnet/minecraft/nbt/CompoundTag;Ljava/util/function/Consumer;)Lnet/minecraft/world/level/chunk/LevelChunk;",
+        "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;replace(ILnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/world/level/chunk/LevelChunk;": "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;m_104487_(ILnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/world/level/chunk/LevelChunk;"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/DrawContextMixin": {
+        "blit(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;FFFF)V": "Lnet/minecraft/client/gui/GuiGraphics;m_280565_(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;FFFF)V",
+        "blit(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V": "Lnet/minecraft/client/gui/GuiGraphics;m_280159_(IIIIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteContentsAnimatorImplMixin": {
+        "tickAndUpload": "Lnet/minecraft/client/renderer/texture/SpriteContents$Ticker;m_247697_(II)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/compositing/FramebufferMixin": {
+        "_blitToScreen": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83971_(IIZ)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/entity/cull/EntityRendererMixin": {
+        "Lnet/minecraft/client/renderer/culling/Frustum;isVisible(Lnet/minecraft/world/phys/AABB;)Z": "Lnet/minecraft/client/renderer/culling/Frustum;m_113029_(Lnet/minecraft/world/phys/AABB;)Z",
+        "shouldRender": "Lnet/minecraft/client/renderer/entity/EntityRenderer;m_5523_(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/MinecraftClientMixin": {
+        "setInitialScreen": "Lnet/minecraft/client/Minecraft;m_278684_(Lcom/mojang/realmsclient/client/RealmsClient;Lnet/minecraft/server/packs/resources/ReloadInstance;Lnet/minecraft/client/main/GameConfig$QuickPlayData;)V",
+        "reloadResourcePacks()Ljava/util/concurrent/CompletableFuture;": "Lnet/minecraft/client/Minecraft;m_91391_()Ljava/util/concurrent/CompletableFuture;",
+        "runTick": "Lnet/minecraft/client/Minecraft;m_91383_(Z)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/particle/BillboardParticleMixin": {
+        "render": "Lnet/minecraft/client/particle/SingleQuadParticle;m_5744_(Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/client/Camera;F)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/PlayerSkinTextureMixin": {
+        "loadCallback": "Lnet/minecraft/client/renderer/texture/HttpTexture;m_118010_(Lcom/mojang/blaze3d/platform/NativeImage;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/NativeImageAccessor": {
+        "pixels": "f_84964_:J"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/render/immediate/consumer/VertexConsumerProviderImmediateMixin": {
+        "getBuffer": "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;m_6299_(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/options/render_layers/RenderLayersMixin": {
+        "setFancy": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;m_109291_(Z)V",
+        "getChunkRenderType": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;m_109282_(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/RenderType;",
+        "getMovingBlockRenderType": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;m_109293_(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/RenderType;",
+        "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;renderCutout:Z": "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;f_109277_:Z"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/render/world/WorldRendererMixin": {
+        "needsUpdate": "Lnet/minecraft/client/renderer/LevelRenderer;m_109826_()V",
+        "renderLevel": "Lnet/minecraft/client/renderer/LevelRenderer;m_109599_(Lcom/mojang/blaze3d/vertex/PoseStack;FJZLnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/GameRenderer;Lnet/minecraft/client/renderer/LightTexture;Lorg/joml/Matrix4f;)V",
+        "Lnet/minecraft/client/renderer/LevelRenderer;globalBlockEntities:Ljava/util/Set;": "Lnet/minecraft/client/renderer/LevelRenderer;f_109468_:Ljava/util/Set;",
+        "allChanged()V": "Lnet/minecraft/client/renderer/LevelRenderer;m_109818_()V",
+        "Lnet/minecraft/client/Options;getEffectiveRenderDistance()I": "Lnet/minecraft/client/Options;m_193772_()I",
+        "setLevel": "Lnet/minecraft/client/renderer/LevelRenderer;m_109701_(Lnet/minecraft/client/multiplayer/ClientLevel;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/gui/font/GlyphRendererMixin": {
+        "render": "Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;m_5626_(ZFFLorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFI)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/shader/uniform/ShaderProgramMixin": {
+        "apply": "Lnet/minecraft/client/renderer/ShaderInstance;m_173363_()V",
+        "Lcom/mojang/blaze3d/shaders/Uniform;glGetUniformLocation(ILjava/lang/CharSequence;)I": "Lcom/mojang/blaze3d/shaders/Uniform;m_85624_(ILjava/lang/CharSequence;)I"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/render/texture/SpriteAtlasTextureAccessor": {
+        "width": "f_276067_:I",
+        "height": "f_276070_:I"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/SpriteContentsInvoker": {
+        "upload": "m_247381_(IIII[Lcom/mojang/blaze3d/platform/NativeImage;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteContentsAnimationFrameAccessor": {
+        "time": "f_244553_:I"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/render/immediate/consumer/BufferBuilderMixin": {
+        "Lcom/mojang/blaze3d/vertex/BufferBuilder;format:Lcom/mojang/blaze3d/vertex/VertexFormat;": "Lcom/mojang/blaze3d/vertex/BufferBuilder;f_85658_:Lcom/mojang/blaze3d/vertex/VertexFormat;",
+        "discard": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_85730_()V",
+        "switchFormat": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_85704_(Lcom/mojang/blaze3d/vertex/VertexFormat;)V",
+        "clear": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_85729_()V",
+        "begin": "Lcom/mojang/blaze3d/vertex/BufferBuilder;m_166779_(Lcom/mojang/blaze3d/vertex/VertexFormat$Mode;Lcom/mojang/blaze3d/vertex/VertexFormat;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/gui/outlines/WorldRendererMixin": {
+        "renderLineBox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;DDDDDDFFFFFFF)V": "Lnet/minecraft/client/renderer/LevelRenderer;m_109621_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;DDDDDDFFFFFFF)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/world/sky/ClientWorldMixin": {
+        "getSkyColor": "Lnet/minecraft/client/multiplayer/ClientLevel;m_171660_(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;",
+        "Lnet/minecraft/util/CubicSampler;gaussianSampleVec3(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/util/CubicSampler;m_130038_(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/BlockModelRendererMixin": {
+        "putQuadData": "Lnet/minecraft/client/renderer/block/ModelBlockRenderer;m_111023_(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;FFFFIIIII)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/NativeImageMixin": {
+        "upload(IIIIIIIZZZZ)V": "Lcom/mojang/blaze3d/platform/NativeImage;m_85013_(IIIIIIIZZZZ)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/VertexFormatMixin": {
+        "clearBufferState": "Lcom/mojang/blaze3d/vertex/VertexFormat;m_86024_()V",
+        "setupBufferState": "Lcom/mojang/blaze3d/vertex/VertexFormat;m_166912_()V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/gui/hooks/debug/DebugHudMixin": {
+        "getSystemInformation": "Lnet/minecraft/client/gui/components/DebugScreenOverlay;m_94078_()Ljava/util/List;"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/render/VertexFormatAccessor": {
+        "offsets": "f_86013_:Lit/unimi/dsi/fastutil/ints/IntList;"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAnimationAccessor": {
+        "frames": "f_243714_:Ljava/util/List;",
+        "frameRowSize": "f_244229_:I"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/AbstractTextureMixin": {
+        "bind": "Lnet/minecraft/client/renderer/texture/AbstractTexture;m_117966_()V",
+        "releaseId": "Lnet/minecraft/client/renderer/texture/AbstractTexture;m_117964_()V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/render/entity/shadows/EntityRenderDispatcherMixin": {
+        "renderBlockShadow": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_277056_(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;DDDFF)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/BufferRendererMixin": {
+        "drawWithShader": "Lcom/mojang/blaze3d/vertex/BufferUploader;m_231202_(Lcom/mojang/blaze3d/vertex/BufferBuilder$RenderedBuffer;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/TextureManagerMixin": {
+        "reload": "Lnet/minecraft/client/renderer/texture/TextureManager;m_5540_(Lnet/minecraft/server/packs/resources/PreparableReloadListener$PreparationBarrier;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/util/profiling/ProfilerFiller;Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;",
+        "_bind": "Lnet/minecraft/client/renderer/texture/TextureManager;m_118519_(Lnet/minecraft/resources/ResourceLocation;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/core/model/colors/BlockColorsMixin": {
+        "register": "Lnet/minecraft/client/color/block/BlockColors;m_92589_(Lnet/minecraft/client/color/block/BlockColor;[Lnet/minecraft/world/level/block/Block;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/tracking/SpriteBillboardParticleMixin": {
+        "setSprite(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V": "Lnet/minecraft/client/particle/TextureSheetParticle;m_108337_(Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/SpriteAtlasTextureMixin": {
+        "tick": "Lnet/minecraft/client/renderer/texture/TextureAtlas;m_7673_()V"
+      },
+      "me/jellysquid/mods/sodium/mixin/debug/checks/FramebufferMixin": {
+        "blitToScreen(IIZ)V": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83957_(IIZ)V",
+        "resize": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83941_(IIZ)V",
+        "unbindWrite": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83970_()V",
+        "bindWrite": "Lcom/mojang/blaze3d/pipeline/RenderTarget;m_83947_(Z)V"
+      },
+      "me/jellysquid/mods/sodium/mixin/features/textures/animations/upload/SpriteContentsAnimationFrameAccessor": {
+        "index": "f_243751_:I",
+        "time": "f_244553_:I"
+      }
+    }
+  }
+}
