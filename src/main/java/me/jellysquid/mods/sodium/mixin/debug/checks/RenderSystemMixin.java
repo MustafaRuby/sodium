@@ -33,7 +33,7 @@ public abstract class RenderSystemMixin {
             "glGenBuffers",
             "glGenVertexArrays",
             "setShader",
-            "setShaderTexture(ILnet/minecraft/util/ResourceLocation;)V",
+            "setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V",
             "setShaderTexture(II)V",
             "setProjectionMatrix",
             "setInverseViewRotationMatrix",

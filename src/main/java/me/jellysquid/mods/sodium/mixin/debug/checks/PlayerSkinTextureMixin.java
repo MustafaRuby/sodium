@@ -12,16 +12,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(HttpTexture.class)
 public abstract class PlayerSkinTextureMixin {
     @Shadow
-    private boolean loaded;
+    private boolean uploaded;
 
     @Shadow
-    protected abstract void uploadTexture(NativeImage image);
+    protected abstract void upload(NativeImage image);
 
-    @Inject(method = "onTextureLoaded", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;execute(Ljava/lang/Runnable;)V", shift = At.Shift.BEFORE), cancellable = true)
+    @Inject(method = "loadCallback", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;execute(Ljava/lang/Runnable;)V", shift = At.Shift.BEFORE), cancellable = true)
     private void validateCurrentThread$loadTextureCallback(NativeImage image, CallbackInfo ci) {
         Minecraft.getInstance().execute(() -> {
-            this.loaded = true;
-            this.uploadTexture(image);
+            this.uploaded = true;
+            this.upload(image);
         });
 
         ci.cancel();

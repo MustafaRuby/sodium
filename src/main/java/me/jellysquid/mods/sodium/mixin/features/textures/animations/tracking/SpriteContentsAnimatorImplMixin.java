@@ -16,10 +16,10 @@ import java.util.List;
 @Mixin(SpriteContents.Ticker.class)
 public class SpriteContentsAnimatorImplMixin {
     @Shadow
-    int currentTime;
+    int subFrame;
     @Shadow
     @Final
-    SpriteContents.AnimatedTexture animation;
+    SpriteContents.AnimatedTexture animationInfo;
     @Shadow
     int frame;
 
@@ -35,25 +35,29 @@ public class SpriteContentsAnimatorImplMixin {
         this.parent = spriteContents;
     }
 
-    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
-    private void preTick(CallbackInfo ci) {
+    @Inject(method = "tickAndUpload", at = @At("HEAD"), cancellable = true)
+    private void preTick(int x, int y, CallbackInfo ci) {
+        if (!SodiumClientMod.isConfigAvailable()) {
+            return;
+        }
+
         SpriteContentsExtended parent = (SpriteContentsExtended) this.parent;
 
         boolean onDemand = SodiumClientMod.options().performance.animateOnlyVisibleTextures;
 
         if (onDemand && !parent.sodium$isActive()) {
-            this.currentTime++;
-            List<SpriteContents.FrameInfo> frames = ((SpriteContentsAnimationAccessor)this.animation).getFrames();
-            if (this.currentTime >= ((SpriteContentsAnimationFrameAccessor)frames.get(this.frame)).getTime()) {
+            this.subFrame++;
+            List<SpriteContents.FrameInfo> frames = ((SpriteContentsAnimationAccessor)this.animationInfo).getFrames();
+            if (this.subFrame >= ((SpriteContentsAnimationFrameAccessor)frames.get(this.frame)).getTime()) {
                 this.frame = (this.frame + 1) % frames.size();
-                this.currentTime = 0;
+                this.subFrame = 0;
             }
             ci.cancel();
         }
     }
 
-    @Inject(method = "tick", at = @At("TAIL"))
-    private void postTick(CallbackInfo ci) {
+    @Inject(method = "tickAndUpload", at = @At("TAIL"))
+    private void postTick(int x, int y, CallbackInfo ci) {
         SpriteContentsExtended parent = (SpriteContentsExtended) this.parent;
         parent.sodium$setActive(false);
     }

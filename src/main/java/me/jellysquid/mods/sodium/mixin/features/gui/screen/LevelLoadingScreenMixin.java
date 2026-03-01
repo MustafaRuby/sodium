@@ -30,7 +30,7 @@ public class LevelLoadingScreenMixin {
     @Mutable
     @Shadow
     @Final
-    private static Object2IntMap<ChunkStatus> STATUS_TO_COLOR;
+    private static Object2IntMap<ChunkStatus> COLORS;
 
     @Unique
     private static Reference2IntOpenHashMap<ChunkStatus> STATUS_TO_COLOR_FAST;
@@ -53,9 +53,9 @@ public class LevelLoadingScreenMixin {
     @Overwrite
     public static void renderChunks(GuiGraphics drawContext, StoringChunkProgressListener tracker, int mapX, int mapY, int mapScale, int mapPadding) {
         if (STATUS_TO_COLOR_FAST == null) {
-            STATUS_TO_COLOR_FAST = new Reference2IntOpenHashMap<>(STATUS_TO_COLOR.size());
+            STATUS_TO_COLOR_FAST = new Reference2IntOpenHashMap<>(COLORS.size());
             STATUS_TO_COLOR_FAST.put(null, NULL_STATUS_COLOR);
-            STATUS_TO_COLOR.object2IntEntrySet()
+            COLORS.object2IntEntrySet()
                     .forEach(entry -> STATUS_TO_COLOR_FAST.put(entry.getKey(), ColorARGB.toABGR(entry.getIntValue(), 0xFF)));
         }
 

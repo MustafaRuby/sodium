@@ -11,39 +11,28 @@ import me.jellysquid.mods.sodium.client.util.NativeImageHelper;
 import me.jellysquid.mods.sodium.client.util.color.ColorSRGB;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import org.lwjgl.system.MemoryUtil;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SpriteContents.class)
 public class SpriteContentsMixin {
-    @Mutable
     @Shadow
     @Final
-    private NativeImage image;
+    private NativeImage originalImage;
 
-    // While Fabric allows us to @Inject into the constructor here, that's just a specific detail of FabricMC's mixin
-    // fork. Upstream Mixin doesn't allow arbitrary @Inject usage in constructor. However, we can use @ModifyVariable
-    // just fine, in a way that hopefully doesn't conflict with other mods.
-    //
-    // By doing this, we can work with upstream Mixin as well, as is used on Forge. While we don't officially
-    // support Forge, since this works well on Fabric too, it's fine to ensure that the diff between Fabric and Forge
-    // can remain minimal. Being less dependent on specific details of Fabric is good, since it means we can be more
-    // cross-platform.
-    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/texture/SpriteContents;image:Lnet/minecraft/client/texture/NativeImage;", opcode = Opcodes.PUTFIELD))
-    private void sodium$beforeGenerateMipLevels(SpriteContents instance, NativeImage nativeImage, ResourceLocation identifier) {
-        // We're injecting after the "info" field has been set, so this is safe even though we're in a constructor.
-        sodium$fillInTransparentPixelColors(nativeImage);
-
-        this.image = nativeImage;
+    // Forge's Mixin 0.8.5 doesn't support @Redirect of PUTFIELD in constructors.
+    // Use @Inject at TAIL instead - the in-place pixel modification works the same since
+    // mipmap generation happens later during texture stitching, not in the constructor.
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void sodium$beforeGenerateMipLevels(CallbackInfo ci) {
+        sodium$fillInTransparentPixelColors(this.originalImage);
     }
 
     /**

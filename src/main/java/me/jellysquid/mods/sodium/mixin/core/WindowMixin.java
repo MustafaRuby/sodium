@@ -15,9 +15,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Window.class)
 public class WindowMixin implements NativeWindowHandle {
-    @Shadow @Final private long handle;
+    @Shadow @Final private long window;
 
-    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwCreateWindow(IILjava/lang/CharSequence;JJ)J", shift = At.Shift.BEFORE))
+    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwCreateWindow(IILjava/lang/CharSequence;JJ)J", shift = At.Shift.BEFORE), require = 0)
     public void setAdditionalWindowHints(CallbackInfo ci) {
         if (SodiumClientMod.options().performance.useNoErrorGLContext &&
                 !Workarounds.isWorkaroundEnabled(Workarounds.Reference.NO_ERROR_CONTEXT_UNSUPPORTED)) {
@@ -27,6 +27,6 @@ public class WindowMixin implements NativeWindowHandle {
 
     @Override
     public long getWin32Handle() {
-        return GLFWNativeWin32.glfwGetWin32Window(this.handle);
+        return GLFWNativeWin32.glfwGetWin32Window(this.window);
     }
 }

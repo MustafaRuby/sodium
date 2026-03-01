@@ -33,8 +33,12 @@ public class MinecraftClientMixin {
      * We run this at the beginning of the frame (except for the first frame) to give the previous frame plenty of time
      * to render on the GPU. This allows us to stall on ClientWaitSync for less time.
      */
-    @Inject(method = "render", at = @At("HEAD"))
+    @Inject(method = "runTick", at = @At("HEAD"))
     private void preRender(boolean tick, CallbackInfo ci) {
+        if (!SodiumClientMod.isConfigAvailable()) {
+            return;
+        }
+
         ProfilerFiller profiler = Minecraft.getInstance().getProfiler();
         profiler.push("wait_for_gpu");
 
@@ -64,7 +68,7 @@ public class MinecraftClientMixin {
         profiler.pop();
     }
 
-    @Inject(method = "render", at = @At("RETURN"))
+    @Inject(method = "runTick", at = @At("RETURN"))
     private void postRender(boolean tick, CallbackInfo ci) {
         var fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
@@ -78,7 +82,7 @@ public class MinecraftClientMixin {
     /**
      * Check for problematic core shader resource packs after the initial game launch.
      */
-    @Inject(method = "onInitFinished", at = @At("TAIL"))
+    @Inject(method = "setInitialScreen", at = @At("TAIL"))
     private void postInit(RealmsClient realms, ReloadInstance reload, GameConfig.QuickPlayData quickPlay, CallbackInfo ci) {
         ResourcePackScanner.checkIfCoreShaderLoaded(this.resourceManager);
     }

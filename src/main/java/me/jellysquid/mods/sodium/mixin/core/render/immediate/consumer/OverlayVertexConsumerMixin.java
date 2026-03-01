@@ -32,11 +32,11 @@ public class OverlayVertexConsumerMixin implements VertexBufferWriter {
 
     @Shadow
     @Final
-    private Matrix3f inverseNormalMatrix;
+    private Matrix3f normalInversePose;
 
     @Shadow
     @Final
-    private Matrix4f inverseTextureMatrix;
+    private Matrix4f cameraInversePose;
 
     @Shadow
     @Final
@@ -58,7 +58,7 @@ public class OverlayVertexConsumerMixin implements VertexBufferWriter {
     @Override
     public void push(MemoryStack stack, long ptr, int count, VertexFormatDescription format) {
         transform(ptr, count, format,
-                this.inverseNormalMatrix, this.inverseTextureMatrix, this.textureScale);
+                this.normalInversePose, this.cameraInversePose, this.textureScale);
 
         VertexBufferWriter.of(this.delegate)
                 .push(stack, ptr, count, format);

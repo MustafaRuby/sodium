@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(DynamicTexture.class)
 public class NativeImageBackedTextureMixin {
-    @Redirect(method = "<init>(Lnet/minecraft/client/texture/NativeImage;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThread()Z"))
+    @Redirect(method = "<init>(Lcom/mojang/blaze3d/platform/NativeImage;)V", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThread()Z"))
     private boolean validateCurrentThread$init() {
         return RenderAsserts.validateCurrentThread();
     }

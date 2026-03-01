@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(SpriteContents.Ticker.class)
 public class SpriteContentsAnimatorImplMixin {
     @Redirect(method = {
-            "tick"
+            "tickAndUpload"
     }, at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThread()Z"))
     private boolean validateCurrentThread$tick() {
         return RenderAsserts.validateCurrentThread();

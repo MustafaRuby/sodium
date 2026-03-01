@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(VertexFormat.class)
 public class VertexFormatMixin {
     @Redirect(method = {
-            "setupState",
-            "clearState"
+            "setupBufferState",
+            "clearBufferState"
     }, at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThread()Z"))
     private boolean validateCurrentThread$modifyState() {
         return RenderAsserts.validateCurrentThread();

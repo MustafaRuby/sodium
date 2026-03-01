@@ -18,7 +18,7 @@ public class ClientPlayNetworkHandlerMixin {
     private ClientLevel level;
 
     @Inject(
-            method = "readLightData",
+            method = "applyLightData",
             at = @At("RETURN")
     )
     private void onLightDataReceived(int x, int z, ClientboundLightUpdatePacketData data, CallbackInfo ci) {

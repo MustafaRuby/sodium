@@ -13,11 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class BiomeMixin {
     @Shadow
     @Final
-    private BiomeSpecialEffects effects;
+    private BiomeSpecialEffects specialEffects;
 
     @Shadow
     @Final
-    private Biome.ClimateSettings weather;
+    private Biome.ClimateSettings climateSettings;
 
     @Unique
     private boolean hasCustomGrassColor;
@@ -44,16 +44,16 @@ public abstract class BiomeMixin {
 
     @Unique
     private void setupColors() {
-        this.cachedSpecialEffects = effects;
+        this.cachedSpecialEffects = specialEffects;
 
-        var grassColor = this.effects.getGrassColorOverride();
+        var grassColor = this.specialEffects.getGrassColorOverride();
 
         if (grassColor.isPresent()) {
             this.hasCustomGrassColor = true;
             this.customGrassColor = grassColor.get();
         }
 
-        var foliageColor = this.effects.getFoliageColorOverride();
+        var foliageColor = this.specialEffects.getFoliageColorOverride();
 
         if (foliageColor.isPresent()) {
             this.hasCustomFoliageColor = true;
@@ -69,7 +69,7 @@ public abstract class BiomeMixin {
      */
     @Overwrite
     public int getGrassColor(double x, double z) {
-        if (this.effects != this.cachedSpecialEffects) {
+        if (this.specialEffects != this.cachedSpecialEffects) {
             setupColors();
         }
 
@@ -81,7 +81,7 @@ public abstract class BiomeMixin {
             color = BiomeColorMaps.getGrassColor(this.defaultColorIndex);
         }
 
-        var modifier = this.effects.getGrassColorModifier();
+        var modifier = this.specialEffects.getGrassColorModifier();
 
         if (modifier != BiomeSpecialEffects.GrassColorModifier.NONE) {
             color = modifier.modifyColor(x, z, color);
@@ -96,7 +96,7 @@ public abstract class BiomeMixin {
      */
     @Overwrite
     public int getFoliageColor() {
-        if (this.effects != this.cachedSpecialEffects) {
+        if (this.specialEffects != this.cachedSpecialEffects) {
             setupColors();
         }
 
@@ -113,8 +113,8 @@ public abstract class BiomeMixin {
 
     @Unique
     private int getDefaultColorIndex() {
-        double temperature = Mth.clamp(this.weather.temperature(), 0.0F, 1.0F);
-        double humidity = Mth.clamp(this.weather.downfall(), 0.0F, 1.0F);
+        double temperature = Mth.clamp(this.climateSettings.temperature(), 0.0F, 1.0F);
+        double humidity = Mth.clamp(this.climateSettings.downfall(), 0.0F, 1.0F);
 
         return BiomeColorMaps.getIndex(temperature, humidity);
     }

@@ -10,15 +10,15 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class FramebufferMixin {
     @Redirect(method = {
             "resize",
-            "beginWrite",
-            "endWrite",
+            "bindWrite",
+            "unbindWrite",
     }, at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThread()Z"))
     private boolean validateCurrentThread$imageOperations() {
         return RenderAsserts.validateCurrentThread();
     }
 
     @Redirect(method = {
-            "draw(IIZ)V",
+            "blitToScreen(IIZ)V",
     }, at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isInInitPhase()Z"))
     private boolean validateCurrentThread$draw() {
         return RenderAsserts.validateCurrentThread();

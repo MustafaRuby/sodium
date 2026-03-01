@@ -42,7 +42,7 @@ private static Logger LOGGER;
         }
     }
 
-    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL;createCapabilities()Lorg/lwjgl/opengl/GLCapabilities;", shift = At.Shift.AFTER))
+    @Inject(method = "<init>", at = @At("TAIL"))
     private void postWindowCreated(WindowEventHandler eventHandler, ScreenManager monitorTracker, DisplayData settings, String videoMode, String title, CallbackInfo ci) {
         GlContextInfo context = GlContextInfo.create();
         LOGGER.info("OpenGL Vendor: {}", context.vendor());
@@ -60,7 +60,7 @@ private static Logger LOGGER;
         ModuleScanner.checkModules((NativeWindowHandle) this);
     }
 
-    @Inject(method = "swapBuffers", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(J)V", shift = At.Shift.AFTER))
+    @Inject(method = "updateDisplay", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;flipFrame(J)V", shift = At.Shift.AFTER))
     private void preSwapBuffers(CallbackInfo ci) {
         if (this.wglPrevContext == MemoryUtil.NULL) {
             // There is no prior recorded context.

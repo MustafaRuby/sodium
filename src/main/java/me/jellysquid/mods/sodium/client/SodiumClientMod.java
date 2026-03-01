@@ -46,6 +46,10 @@ public class SodiumClientMod {
         }
     }
 
+    public static boolean isConfigAvailable() {
+        return CONFIG != null;
+    }
+
     public static SodiumGameOptions options() {
         if (CONFIG == null) {
             throw new IllegalStateException("Config not yet available");

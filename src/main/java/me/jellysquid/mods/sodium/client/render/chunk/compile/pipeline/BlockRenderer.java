@@ -61,7 +61,7 @@ public class BlockRenderer {
 
         LightPipeline lighter = this.lighters.getLighter(this.getLightingMode(ctx.state(), ctx.model()));
         Vec3 renderOffset;
-        
+
         if (ctx.state().hasOffsetFunction()) {
             renderOffset = ctx.state().getOffset(ctx.world(), ctx.pos());
         } else {
@@ -69,10 +69,12 @@ public class BlockRenderer {
         }
 
         for (Direction face : DirectionUtil.ALL_DIRECTIONS) {
-            List<BakedQuad> quads = this.getGeometry(ctx, face);
+            if (this.isFaceVisible(ctx, face)) {
+                List<BakedQuad> quads = this.getGeometry(ctx, face);
 
-            if (!quads.isEmpty() && this.isFaceVisible(ctx, face)) {
-                this.renderQuadList(ctx, material, lighter, colorizer, renderOffset, meshBuilder, quads, face);
+                if (!quads.isEmpty()) {
+                    this.renderQuadList(ctx, material, lighter, colorizer, renderOffset, meshBuilder, quads, face);
+                }
             }
         }
 

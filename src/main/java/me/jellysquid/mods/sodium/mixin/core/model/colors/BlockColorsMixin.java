@@ -22,7 +22,7 @@ public class BlockColorsMixin implements BlockColorsExtended {
     @Unique
     private final ReferenceSet<Block> overridenBlocks = new ReferenceOpenHashSet<>();
 
-    @Inject(method = "registerColorProvider", at = @At("HEAD"))
+    @Inject(method = "register", at = @At("HEAD"))
     private void preRegisterColorProvider(BlockColor provider, Block[] blocks, CallbackInfo ci) {
         for (Block block : blocks) {
             // There will be one provider already registered for vanilla blocks, if we are replacing it,

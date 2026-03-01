@@ -70,7 +70,23 @@ tasks.withType<JavaCompile> {
     options.release.set(17)
 }
 
+tasks.processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// Copy the mixin refmap to the resources output so it's on the classpath at runtime
+tasks.register<Copy>("copyRefmap") {
+    from(layout.buildDirectory.file("tmp/compileJava/sodium.refmap.json"))
+    into(layout.buildDirectory.dir("resources/main"))
+    mustRunAfter(tasks.compileJava)
+}
+
+tasks.classes {
+    dependsOn("copyRefmap")
+}
+
 tasks.jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes(
             "MixinConfigs" to "sodium.mixins.json"

@@ -17,15 +17,15 @@ public class PackedIntegerArrayMixin implements PaletteStorageExtended {
 
     @Shadow
     @Final
-    private int elementsPerLong;
+    private int valuesPerLong;
 
     @Shadow
     @Final
-    private long maxValue;
+    private long mask;
 
     @Shadow
     @Final
-    private int elementBits;
+    private int bits;
 
     @Shadow
     @Final
@@ -38,10 +38,10 @@ public class PackedIntegerArrayMixin implements PaletteStorageExtended {
         for (long word : this.data) {
             long l = word;
 
-            for (int j = 0; j < this.elementsPerLong; ++j) {
-                out[idx] = Objects.requireNonNull(palette.valueFor((int) (l & this.maxValue)),
+            for (int j = 0; j < this.valuesPerLong; ++j) {
+                out[idx] = Objects.requireNonNull(palette.valueFor((int) (l & this.mask)),
                         "Palette does not contain entry for value in storage");
-                l >>= this.elementBits;
+                l >>= this.bits;
 
                 if (++idx >= this.size) {
                     return;

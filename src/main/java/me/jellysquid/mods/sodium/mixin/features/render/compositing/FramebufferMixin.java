@@ -13,19 +13,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(RenderTarget.class)
 public class FramebufferMixin {
     @Shadow
-    public int fbo;
+    public int frameBufferId;
 
     @Shadow
-    public int textureWidth;
+    public int width;
 
     @Shadow
-    public int textureHeight;
+    public int height;
 
     /**
      * @author JellySquid
      * @reason Use fixed function hardware for framebuffer blits
      */
-    @Inject(method = "drawInternal", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "_blitToScreen", at = @At("HEAD"), cancellable = true)
     public void blitToScreen(int width, int height, boolean disableBlend, CallbackInfo ci) {
         if (Workarounds.isWorkaroundEnabled(Workarounds.Reference.INTEL_FRAMEBUFFER_BLIT_CRASH_WHEN_UNFOCUSED)) {
             return;
@@ -37,7 +37,7 @@ public class FramebufferMixin {
             // When blending is not used, we can directly copy the contents of one
             // framebuffer to another using the blitting engine. This can save a lot of time
             // when compared to going through the rasterization pipeline.
-            GL32C.glBindFramebuffer(GL32C.GL_READ_FRAMEBUFFER, this.fbo);
+            GL32C.glBindFramebuffer(GL32C.GL_READ_FRAMEBUFFER, this.frameBufferId);
             GL32C.glBlitFramebuffer(
                     0, 0, width, height,
                     0, 0, width, height,

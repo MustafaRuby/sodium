@@ -1,13 +1,18 @@
 package me.jellysquid.mods.sodium.mixin.features.model;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.MultiPartBakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.MultipartModelData;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 
 import java.util.*;
@@ -23,14 +28,14 @@ public class MultipartBakedModelMixin {
 
     @Shadow
     @Final
-    private List<Pair<Predicate<BlockState>, BakedModel>> components;
+    private List<Pair<Predicate<BlockState>, BakedModel>> selectors;
 
     /**
      * @author JellySquid
      * @reason Avoid expensive allocations and replace bitfield indirection
      */
-    @Overwrite
-    public List<BakedQuad> getQuads(BlockState state, Direction face, RandomSource random) {
+    @Overwrite(remap = false)
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, @NotNull RandomSource random, @NotNull ModelData modelData, @Nullable RenderType renderType) {
         if (state == null) {
             return Collections.emptyList();
         }
@@ -47,9 +52,9 @@ public class MultipartBakedModelMixin {
         if (models == null) {
             long writeStamp = this.lock.writeLock();
             try {
-                List<BakedModel> modelList = new ArrayList<>(this.components.size());
+                List<BakedModel> modelList = new ArrayList<>(this.selectors.size());
 
-                for (Pair<Predicate<BlockState>, BakedModel> pair : this.components) {
+                for (Pair<Predicate<BlockState>, BakedModel> pair : this.selectors) {
                     if (pair.getLeft().test(state)) {
                         modelList.add(pair.getRight());
                     }
@@ -67,7 +72,7 @@ public class MultipartBakedModelMixin {
 
         for (BakedModel model : models) {
             random.setSeed(seed);
-            quads.addAll(model.getQuads(state, face, random));
+            quads.addAll(model.getQuads(state, face, random, MultipartModelData.resolve(modelData, model), renderType));
         }
 
         return quads;

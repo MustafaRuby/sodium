@@ -11,9 +11,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static me.jellysquid.mods.sodium.client.util.ModelQuadUtil.*;
 
@@ -21,7 +18,7 @@ import static me.jellysquid.mods.sodium.client.util.ModelQuadUtil.*;
 public class BakedQuadMixin implements BakedQuadView {
     @Shadow
     @Final
-    protected int[] vertexData;
+    protected int[] vertices;
 
     @Shadow
     @Final
@@ -29,11 +26,11 @@ public class BakedQuadMixin implements BakedQuadView {
 
     @Shadow
     @Final
-    protected int colorIndex;
+    protected int tintIndex;
 
     @Shadow
     @Final
-    protected Direction face; // This is really the light face, but we can't rename it.
+    protected Direction direction; // This is really the light face, but we can't rename it.
 
     @Shadow
     @Final
@@ -48,32 +45,42 @@ public class BakedQuadMixin implements BakedQuadView {
     @Unique
     private ModelQuadFacing normalFace;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void init(int[] vertexData, int colorIndex, Direction face, TextureAtlasSprite sprite, boolean shade, CallbackInfo ci) {
-        this.normal = ModelQuadUtil.calculateNormal(this);
-        this.normalFace = ModelQuadUtil.findNormalFace(this.normal);
+    @Unique
+    private boolean sodium$initialized;
 
-        this.flags = ModelQuadFlags.getQuadFlags(this, face);
+    /**
+     * Lazily initialize Sodium's quad data. Forge patches BakedQuad with additional
+     * constructors that the mixin @Inject can't reliably target, so we compute
+     * on first access instead.
+     */
+    @Unique
+    private void sodium$ensureInitialized() {
+        if (!this.sodium$initialized) {
+            this.sodium$initialized = true;
+            this.normal = ModelQuadUtil.calculateNormal(this);
+            this.normalFace = ModelQuadUtil.findNormalFace(this.normal);
+            this.flags = ModelQuadFlags.getQuadFlags(this, this.direction);
+        }
     }
 
     @Override
     public float getX(int idx) {
-        return Float.intBitsToFloat(this.vertexData[vertexOffset(idx) + POSITION_INDEX]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + POSITION_INDEX]);
     }
 
     @Override
     public float getY(int idx) {
-        return Float.intBitsToFloat(this.vertexData[vertexOffset(idx) + POSITION_INDEX + 1]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + POSITION_INDEX + 1]);
     }
 
     @Override
     public float getZ(int idx) {
-        return Float.intBitsToFloat(this.vertexData[vertexOffset(idx) + POSITION_INDEX + 2]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + POSITION_INDEX + 2]);
     }
 
     @Override
     public int getColor(int idx) {
-        return this.vertexData[vertexOffset(idx) + COLOR_INDEX];
+        return this.vertices[vertexOffset(idx) + COLOR_INDEX];
     }
 
     @Override
@@ -83,32 +90,34 @@ public class BakedQuadMixin implements BakedQuadView {
 
     @Override
     public float getTexU(int idx) {
-        return Float.intBitsToFloat(this.vertexData[vertexOffset(idx) + TEXTURE_INDEX]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + TEXTURE_INDEX]);
     }
 
     @Override
     public float getTexV(int idx) {
-        return Float.intBitsToFloat(this.vertexData[vertexOffset(idx) + TEXTURE_INDEX + 1]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + TEXTURE_INDEX + 1]);
     }
 
     @Override
     public int getFlags() {
+        this.sodium$ensureInitialized();
         return this.flags;
     }
 
     @Override
     public int getColorIndex() {
-        return this.colorIndex;
+        return this.tintIndex;
     }
 
     @Override
     public ModelQuadFacing getNormalFace() {
+        this.sodium$ensureInitialized();
         return this.normalFace;
     }
 
     @Override
     public Direction getLightFace() {
-        return this.face;
+        return this.direction;
     }
 
     @Override

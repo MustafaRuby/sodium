@@ -13,20 +13,20 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(Frustum.class)
 public class FrustumMixin implements ViewportProvider {
     @Shadow
-    private double x;
+    private double camX;
 
     @Shadow
-    private double y;
+    private double camY;
 
     @Shadow
-    private double z;
+    private double camZ;
 
     @Shadow
     @Final
-    private FrustumIntersection frustumIntersection;
+    private FrustumIntersection intersection;
 
     @Override
     public Viewport sodium$createViewport() {
-        return new Viewport(new SimpleFrustum(this.frustumIntersection), new Vector3d(this.x, this.y, this.z));
+        return new Viewport(new SimpleFrustum(this.intersection), new Vector3d(this.camX, this.camY, this.camZ));
     }
 }

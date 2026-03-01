@@ -11,8 +11,9 @@ The core problem: Fabric mods use "Yarn" mappings for Minecraft's obfuscated cod
 **Branch:** `1.20.1/stable-0.5`
 **Source:** Sodium 0.5.13 (Fabric/Yarn)
 **Target:** Forge 1.20.1 (Mojang mappings)
-**Last updated:** 2026-02-28
-**Build status:** 0 errors, 100 warnings — compiles successfully
+**Last updated:** 2026-03-01
+**Build status:** 0 errors, 28 warnings — compiles successfully
+**Runtime status:** Game launches, world loads, terrain renders incorrectly — "exploded" block positions
 
 ---
 
@@ -169,11 +170,9 @@ The sed script handled imports and class names but didn't touch most method call
 
 **Wave 2 — Rendering core (~100 errors across 23 files)**
 
-Fixing the world/biome/light files unblocked the entire rendering pipeline. Every file that depended on `WorldSlice`, `ClonedChunkSection`, or the light data now revealed its own Yarn method names.
-
 | File | Errors | Key renames |
 |------|--------|------------|
-| `FluidRenderer.java` | 19 | `getType()`, `Shapes.box()`, `Shapes.blockOccudes()` (sic — that's the Mojang typo, not mine), `setWithOffset()`, `contents().height()`, `shouldRenderBackwardUpFace()`, `shouldDisplayFluidOverlay()`, `TextureAtlas.LOCATION_BLOCKS`, `above()`, `getOwnHeight()` |
+| `FluidRenderer.java` | 19 | `getType()`, `Shapes.box()`, `Shapes.blockOccudes()`, `setWithOffset()`, `contents().height()`, `shouldRenderBackwardUpFace()`, `shouldDisplayFluidOverlay()`, `TextureAtlas.LOCATION_BLOCKS`, `above()`, `getOwnHeight()` |
 | `ChunkBuilderMeshingTask.java` | 12 | `getRenderShape()`, `getBlockModel()`, `getSeed()`, `getRenderer()`, `shouldRenderOffScreen()`, `isSolidRender()`, `CrashReport.forThrowable()` |
 | `RenderSectionManager.java` | 11 | `smartCull`, `ChunkAccess`, `hasOnlyAir()`, `Mth.equal()`, `getMinSection()/getMaxSection()` |
 | `BlockRenderer.java` | 7 | `SingleThreadedRandomSource`, `hasOffsetFunction()`, `getOffset()`, `offset.x()/y()/z()`, `getLightEmission()` |
@@ -198,8 +197,6 @@ Fixing the world/biome/light files unblocked the entire rendering pipeline. Ever
 | `EntityRenderer.java` | 1 | `translateAndRotate()` |
 
 **Wave 3 — CloudRenderer and SodiumWorldRenderer (~90 errors across 2 files)**
-
-These two files are the biggest in the mod and had the most remaining Yarn names — nearly every rendering API call was wrong.
 
 | File | Errors | Key renames |
 |------|--------|------------|
@@ -251,129 +248,230 @@ These two files are the biggest in the mod and had the most remaining Yarn names
 | `ModelVertex.java` | `POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL` | `NEW_ENTITY` |
 | `ParticleVertex.java` | `POSITION_TEXTURE_COLOR_LIGHT` | `PARTICLE` |
 
----
+### Runtime crash fixes (Sessions 6–8)
 
-## What's left (100 warnings, 0 errors)
+After the compile-time fixes, the game still crashed on launch due to remaining Yarn names in @Shadow fields, wrong mixin targets, and Forge-specific API differences. These were fixed across three debugging sessions.
 
-The project compiles. `./gradlew compileJava` passes. But the mixin annotation processor spits out 100 warnings, and some of them are going to crash at runtime if they're not fixed. Here's the breakdown.
+**@Shadow field renames (39 files, 32 fields)**
 
-### Dangerous — @Shadow fields pointing at wrong names (32 "Cannot find target" + 32 "Unable to locate obfuscation mapping" = 64 warnings)
+Every @Shadow field that still used a Yarn name was looked up in Forge's decompiled sources and renamed. The full list is in the "Method-level remapping" tables above. The ones fixed at this stage that actually crashed at runtime:
 
-These @Shadow fields still use Yarn field names. The mixin AP can't find the field in the target class, which means the mixin will fail to apply at runtime and the game will crash on launch.
+| File | Yarn field | Mojang field |
+|------|-----------|-------------|
+| `FrustumMixin.java` | `x`, `y`, `z`, `frustumIntersection` | `camX`, `camY`, `camZ`, `intersection` |
+| `WindowMixin.java` (core) | `handle` | `window` |
+| `BakedQuadMixin.java` | `vertexData`, `colorIndex`, `face` | `vertices`, `tintIndex`, `direction` |
+| `WeightedBakedModelMixin.java` | `models` | `list` |
+| `MultipartBakedModelMixin.java` | `components` | `selectors` |
+| `PackedIntegerArrayMixin.java` | `elementBits`, `maxValue`, `storage` | `bits`, `mask`, `data` |
+| `GlyphRendererMixin.java` | 8 fields | All renamed to Mojang equivalents |
+| `OverlayVertexConsumerMixin.java` | `affine`, `normalMatrix` | `cameraInversePose`, `normalInversePose` |
+| `FramebufferMixin.java` (compositing) | `colorAttachment`, `depthAttachment`, `viewWidth` | `colorTextureId`, `depthBufferId`, `width` |
+| `LevelLoadingScreenMixin.java` | `tracker` | `progressListener` |
+| `MatrixStackMixin.java` | `stack` | `poseStack` |
+| `RenderLayersMixin.java` | `layers`, `layersByFluid` | `TYPE_BY_BLOCK`, `TYPE_BY_FLUID` |
+| `PlayerSkinTextureMixin.java` | `textureLoaded`, `close` | `uploaded`, `close` (method target rename) |
 
-| File | Lines | Target class | # fields broken |
-|------|-------|-------------|----------------|
-| `GlyphRendererMixin.java` | 19, 23, 27, 31, 35, 39, 43, 47 | `BakedGlyph` | 8 |
-| `FrustumMixin.java` | 15, 18, 21, 24 | `Frustum` | 4 |
-| `PackedIntegerArrayMixin.java` | 18, 22, 26 | `SimpleBitStorage` | 3 |
-| `BakedQuadMixin.java` | 22, 30, 34 | `BakedQuad` | 3 |
-| `FramebufferMixin.java` (compositing) | 15, 18, 21 | `RenderTarget` | 3 |
-| `OverlayVertexConsumerMixin.java` | 33, 37 | `SheetedDecalTextureGenerator` | 2 |
-| `RenderLayersMixin.java` | 18, 23 | `ItemBlockRenderTypes` | 2 |
-| `PlayerSkinTextureMixin.java` | 14, 17 | `HttpTexture` | 2 (1 field + 1 method) |
-| `WeightedBakedModelMixin.java` | 17 | `WeightedBakedModel` | 1 |
-| `MultipartBakedModelMixin.java` | 24 | `MultiPartBakedModel` | 1 |
-| `LevelLoadingScreenMixin.java` | 31 | `LevelLoadingScreen` | 1 |
-| `MatrixStackMixin.java` | 13 | `PoseStack` | 1 |
-| `WindowMixin.java` (core) | 18 | `Window` | 1 |
+**@Inject/@Redirect target fixes**
 
-Every one of these needs the Yarn field name looked up and replaced with the Mojang name. The fix for each is trivial — rename the field — but there are 32 of them.
+| File | Old target | New target |
+|------|-----------|-----------|
+| `MinecraftClientMixin.java` | `method = "render"` (2 injections) | `method = "runTick"` |
+| `MinecraftClientMixin.java` | `method = "onInitFinished"` | `method = "setInitialScreen"` |
+| `BlockColorsMixin.java` | `method = "registerColorProvider"` | `method = "register"` |
+| `WorldRendererMixin.java` (core) | `target = "...getClampedViewDistance()I"` | `target = "...getEffectiveRenderDistance()I"` |
+| `WorldRendererMixin.java` (core) | `method = "render"` | `method = "renderLevel"` |
+| `FramebufferMixin.java` (debug) | `draw(IIZ)V` | `blitToScreen(II)V` |
+| `NativeImageBackedTextureMixin.java` | Yarn path in descriptor | Mojang path |
+| `RenderSystemMixin.java` (debug) | Yarn path in descriptor | Mojang path |
+| `VertexBufferMixin.java` | Yarn path in descriptor | Mojang path |
 
-### Probably dangerous — @Inject/@Redirect target descriptors with Yarn class paths (4 warnings)
+**Forge getQuads signature change**
 
-These mixin target strings contain Yarn package paths in their method descriptors. The mixin AP can't resolve them, and they'll likely crash at runtime.
+Forge patches `BakedModel.getQuads()` from 3 parameters to 5 parameters. The two model @Overwrite mixins had to be updated to match Forge's signature, and marked `remap = false` since this is a Forge-added method.
 
-| File | Line | Problem |
-|------|------|---------|
-| `FramebufferMixin.java` (debug) | 20 | Target method `draw(IIZ)V` doesn't exist — Mojang name is `blitToScreen(int, int, boolean)V` |
-| `NativeImageBackedTextureMixin.java` | 11 | Descriptor has `Lnet/minecraft/client/texture/NativeImage;` — should be `Lcom/mojang/blaze3d/platform/NativeImage;` |
-| `RenderSystemMixin.java` (debug) | 30 | Descriptor has `Lnet/minecraft/util/ResourceLocation;` — should be `Lnet/minecraft/resources/ResourceLocation;` |
-| `VertexBufferMixin.java` | 11 | Descriptor has `Lnet/minecraft/client/gl/ShaderInstance;` — should be `Lnet/minecraft/client/renderer/ShaderInstance;` |
+| File | Old signature | New signature |
+|------|-------------|-------------|
+| `WeightedBakedModelMixin.java` | `getQuads(BlockState, Direction, RandomSource)` | `getQuads(BlockState, Direction, RandomSource, ModelData, RenderType)` |
+| `MultipartBakedModelMixin.java` | `getQuads(BlockState, Direction, RandomSource)` | `getQuads(BlockState, Direction, RandomSource, ModelData, RenderType)` |
 
-### Probably harmless — "Unable to determine descriptor" (24 warnings)
+The `MultipartBakedModelMixin` also needed `MultipartModelData.resolve(modelData, model)` for Forge's multipart model data propagation.
 
-The mixin AP can't verify the target method signature at compile time. This happens a lot with method-only `@Inject(method = "methodName")` annotations where the AP can't resolve overloads. Usually the refmap sorts it out at runtime. Most of these are probably fine, but some might hide a wrong method name.
+**BakedQuadMixin lazy initialization**
 
-Files affected: `MinecraftClientMixin.java` (3), `BlockColorsMixin.java` (1), `WorldRendererMixin.java` (core, 1), `ClientPlayNetworkHandlerMixin.java` (1), `PlayerSkinTextureMixin.java` (1), `OptionsScreenMixin.java` (1), `FramebufferMixin.java` (compositing, 1), `GlyphRendererMixin.java` (1), `BlockModelRendererMixin.java` (tracking, 1), `SpriteContentsAnimatorImplMixin.java` (2), `WindowMixin.java` (workarounds, 1), `AbstractTextureMixin.java` (2), `BufferRendererMixin.java` (1), `FramebufferMixin.java` (debug, 2), `SpriteContentsAnimatorImplMixin.java` (debug, 1), `VertexFormatMixin.java` (2), `DebugHudMixin.java` (1), `VertexConsumerProviderImmediateMixin.java` (1)
+Forge patches `BakedQuad` with additional constructors that Mixin's `@Inject(method = "<init>")` can't reliably target. The `@Inject` on `<init>` was removed and replaced with lazy initialization — Sodium's computed quad data (normal, normalFace, flags) is now calculated on first access via `sodium$ensureInitialized()` instead of in the constructor.
 
-### Harmless — "Unable to locate method mapping" for LWJGL calls (5 warnings)
+**SodiumClientMod.isConfigAvailable() guard**
 
-These target LWJGL methods (`glfwCreateWindow`, `GL.createCapabilities`, `RenderSystem.flipFrame`), which aren't Minecraft code and don't have obfuscation mappings. Expected. These are fine.
+`MinecraftClientMixin.preRender()` calls `SodiumClientMod.options()` which throws `IllegalStateException("Config not yet available")` if called before mod init completes. Added `isConfigAvailable()` check and early return.
 
-Files affected: `WindowMixin.java` (core, 1), `WindowMixin.java` (workarounds, 2), `WorldRendererMixin.java` (core, 1 — `Options.getClampedViewDistance`), `InGameHudMixin.java` (1 — `Minecraft.isFancyGraphicsOrBetter`)
+**WindowMixin require = 0**
 
-### Harmless — "Unable to locate field mapping" (3 warnings)
+The `@Inject` targeting `glfwCreateWindow` in `WindowMixin` was made optional with `require = 0` because Forge's Window class structure differs enough that the injection point may not resolve.
 
-Same idea — the AP can't find the obfuscation mapping for a field target in an `@At(FIELD)` expression.
+**Mixin refmap wiring**
 
-Files: `CuboidMixin.java` (1 — `ModelPart$Cuboid;sides`), `RenderLayersMixin.java` (options, 1 — `fancyGraphicsOrBetter`), `SpriteContentsMixin.java` (mipmaps, 1 — `SpriteContents;image` — still uses Yarn path `net/minecraft/client/texture/SpriteContents`)
+Added `"refmap": "sodium.refmap.json"` to `sodium.mixins.json`. Added a Gradle `copyRefmap` task to copy the mixin AP's generated refmap from `build/tmp/compileJava/` to `build/resources/main/` so it's on the classpath at runtime.
 
-### Harmless — deprecated API usage (2 warnings, not counted individually)
+**Build system fixes**
 
-The compiler notes "Some input files use or override a deprecated API" and "marked for removal". This is fine — Mojang deprecates stuff all the time in 1.20.x and it still works.
-
-### Warning totals
-
-| Category | Count | Will it crash? |
-|----------|-------|---------------|
-| @Shadow field name wrong | 64 (32 fields × 2 warnings each) | Yes — mixin apply fails |
-| @Inject/@Redirect descriptor has Yarn paths | 4 | Yes — method not found |
-| "Unable to determine descriptor" | 24 | Maybe — depends on refmap |
-| LWJGL method mapping not found | 5 | No |
-| Field mapping not found | 3 | Maybe — 1 has a Yarn path |
-| Deprecated API | ~2 | No |
-| **Total** | **~100** | |
+Added `duplicatesStrategy = DuplicatesStrategy.EXCLUDE` to both `processResources` and `jar` tasks to prevent duplicate resource conflicts.
 
 ---
 
-## Game plan for the remaining fixes
+## Current state — the terrain rendering problem
 
-**Step 1 — Fix the 32 @Shadow fields (kills 64 warnings, prevents launch crashes)**
+The game launches, loads into a world, and renders terrain. Physics work (player collides with blocks correctly). The HUD, sky, entities, and particles all render. But the terrain itself is wrong.
 
-Look up every @Shadow field name in the Forge decompiled sources and rename to Mojang. Highest priority — these are guaranteed crashes. The biggest offender is `GlyphRendererMixin.java` with 8 broken fields.
+### What it looks like
 
-**Step 2 — Fix the 4 broken @Inject/@Redirect descriptors**
+Blocks render with correct textures and lighting, but their positions are displaced. The terrain appears "exploded" — sections of blocks are shifted to wrong locations in 3D space. You can recognize grass, stone, trees, etc., but they're scattered rather than forming a coherent landscape. The player stands on invisible collision geometry while the visible blocks float elsewhere.
 
-Replace Yarn class paths in the target strings with Mojang paths:
-- `net/minecraft/client/texture/NativeImage` -> `com/mojang/blaze3d/platform/NativeImage`
-- `net/minecraft/util/ResourceLocation` -> `net/minecraft/resources/ResourceLocation`
-- `net/minecraft/client/gl/ShaderInstance` -> `net/minecraft/client/renderer/ShaderInstance`
-- `draw(IIZ)V` -> `blitToScreen(II)V` (and check exact Mojang signature)
+### What has been verified correct
 
-**Step 3 — Audit the 24 "Unable to determine descriptor" warnings**
+Every component of the chunk rendering pipeline from Java through the vertex shader has been individually verified:
 
-Most are probably fine, but scan each one to make sure the method name is actually correct in Mojang mappings. The `method_19828` in `OptionsScreenMixin.java` is definitely still a Yarn intermediary name and needs to be looked up.
+| Component | Status | How verified |
+|-----------|--------|-------------|
+| Vertex positions (Java side) | Correct | `BlockRenderer.writeGeometry()` outputs section-local coords (0-16 range) via `ctx.origin()` + quad position |
+| CompactChunkVertex encoding | Correct | `(8.0 + pos) / 32.0` scaled to 20-bit uint. Shader decodes with `(uint * 32/1048576) - 8.0`. Math checks out. |
+| Section index packing (Java) | Correct | `LocalSectionIndex.pack()`: X bits 5-7, Y bits 0-1, Z bits 2-4 |
+| Section index unpacking (GLSL) | Correct | `_get_relative_chunk_coord()`: `>> uvec3(5,0,2) & uvec3(7,3,7)` — matches Java packing |
+| Section index in vertex data | Correct | Packed into byte 3 of `a_LightAndData` attribute: `(section & 0xFF) << 24`, read as `a_LightAndData[3]` |
+| GL vertex attribute binding | Correct | `glVertexAttribIPointer` used for integer attributes. `glBindAttribLocation` explicitly binds all 4 attributes. |
+| Model-view matrix | Correct | Logged at runtime: row3 = (0,0,0,1) — rotation only, no translation. Camera transform is in u_RegionOffset, not the matrix. |
+| Region offsets (u_RegionOffset) | Correct | Logged values match mathematical expectation: `(regionBlockOrigin - cameraIntPos) - cameraFracPos` |
+| Camera int/frac split | Correct | `CameraTransform` splits camera position to integer + fractional. Logged values match. |
+| Mesh upload pipeline | Correct | Traced through `ChunkMeshBufferBuilder` -> `StagingBuffer` -> GL buffer. Structurally sound. |
+| Shader section translation | Correct | `u_RegionOffset + _get_draw_translation(_draw_id)` where `_get_draw_translation` = `relative_chunk_coord * 16.0` |
 
-**Step 4 — Fix the 1 field mapping with a Yarn path**
+### What has been observed via diagnostics
 
-`SpriteContentsMixin.java` line 41 — the `@At(FIELD)` target still has `net/minecraft/client/texture/SpriteContents` which should be `net/minecraft/client/renderer/texture/SpriteContents`.
+**Test 1 — Occlusion culling disabled, face culling enabled:**
+Terrain visible but displaced. More geometry visible than with occlusion culling on. Terrain appears "below feet, no grass visible, phasing through stuff."
 
-**Step 5 — Runtime test**
+**Test 2 — Occlusion culling disabled, ALL face culling disabled (both build-time and draw-time):**
+Complete blackness. The entire view is a solid opaque mass. This is actually informative — it means the geometry IS forming a coherent opaque volume (positions are close enough that adjacent block faces overlap), but the interior faces overwhelm the visible surface.
 
-Launch Minecraft with the built mod in a Forge 1.20.1 dev environment (`./gradlew runClient`). This is where we find out if:
-- The remaining "Unable to determine descriptor" warnings are actually fine
-- The mixin refmap resolves everything correctly
-- There are runtime logic errors from incorrect Yarn->Mojang translations that compiled fine but do the wrong thing
-- The access transformer entries all work
+**Test 3 — Shader debug visualization (section position encoded as color):**
+Added `v_DebugSectionColor` varying that encodes `_get_relative_chunk_coord(_draw_id)` as RGB (R=X/7, G=Y/3, B=Z/7). Result: multiple distinct colors are visible, confirming that section indices are NOT all the same value. Sections have different indices. The color pattern does not form a smooth spatial gradient — it appears jumbled, suggesting sections are being assigned to wrong positions within their regions, or the render lists are matching sections to wrong region offsets.
 
-**Step 6 — Build a jar**
+### Diagnostic code currently in the codebase
+
+**These must all be reverted before shipping.** They are marked with `// DIAGNOSTIC:` comments.
+
+| File | What it does |
+|------|-------------|
+| `RenderSectionManager.java` | `shouldUseOcclusionCulling()` hardcoded to `return false`. Debug logging in `update()` (frames 0-20 and 50-80) and `renderLayer()` (first 30 calls). |
+| `DefaultChunkRenderer.java` | Debug logging in `render()` — dumps model-view matrix and region offsets for first 3 render passes with geometry. |
+| `SodiumWorldRenderer.java` | Debug logging in `drawChunkLayer()` — logs render layer and camera position for first 30 calls. |
+| `ChunkBuilderMeshingTask.java` | Debug logging in `execute()` — logs section coordinates and mesh pass count for first 20 chunk builds. |
+| `block_layer_opaque.vsh` | Passes `v_DebugSectionColor` varying to fragment shader, encoding section-relative coordinates as RGB. |
+| `block_layer_opaque.fsh` | Blends 70% debug section color over the normal texture color. |
+
+### Known bug introduced during diagnostics
+
+`DefaultChunkRenderer.java` line 149 — the `getVisibleFaces()` call currently passes `originX, originY, originZ` (the region's chunk origin) instead of `camera.intX, camera.intY, camera.intZ` (the camera position). The original code used `camera.intX/Y/Z`. This makes draw-time face culling wrong (culling relative to region origin instead of camera), but this is NOT the root cause of the terrain displacement — the displacement was present before this change.
+
+---
+
+## What's left
+
+### Step 1 — Identify the terrain displacement root cause
+
+Everything that has been verified individually checks out. The positions encode correctly, the shader decodes correctly, the section indices pack/unpack correctly, the region offsets are mathematically correct. Yet the terrain is displaced.
+
+The shader debug visualization shows distinct section colors that don't form a smooth gradient. This narrows the problem to one of:
+
+1. **Section-to-region assignment is wrong.** A section might be assigned to the wrong region, so it gets the wrong `u_RegionOffset` but the right local section index — or vice versa. Check `RenderSection.getRegion()`, `RenderRegion.addSection()`, and the render list construction.
+
+2. **The render list pairs the wrong section data with the wrong draw commands.** The iterator in `fillCommandBuffer` reads section indices and looks up mesh data pointers. If the section indices in the render list don't correspond to the mesh data in the storage, sections would draw at wrong positions. Check `ChunkRenderList` population and `SectionRenderDataStorage` indexing.
+
+3. **Base vertex offsets in the multi-draw batch are wrong.** `multiDrawElementsBaseVertex` uses per-section base vertex offsets. If a section's vertex data was uploaded at a different offset than what the draw command references, the wrong vertices would be drawn with the wrong section translation. Check `SectionRenderDataUnsafe.getVertexOffset()` against actual upload positions.
+
+4. **The 3-param vs 5-param getQuads mismatch.** `BlockRenderer.getGeometry()` calls `ctx.model().getQuads(state, face, random)` — the vanilla 3-param version. On Forge, the model's `@Overwrite` targets the 5-param version. If the 3-param call bypasses the overwritten method and falls through to different dispatch logic, blocks might return quads for the wrong model variant. Check whether `getQuads(state, face, random)` on Forge correctly dispatches to the 5-param overload.
+
+### Step 2 — Fix the terrain displacement
+
+Once the root cause is identified, fix it. This is the only blocker for functional terrain rendering.
+
+### Step 3 — Revert all diagnostic code
+
+Remove every line marked `// DIAGNOSTIC:` in the files listed above. Restore:
+- `shouldUseOcclusionCulling()` to its original logic in `RenderSectionManager.java`
+- All debug logging in `RenderSectionManager`, `DefaultChunkRenderer`, `SodiumWorldRenderer`, `ChunkBuilderMeshingTask`
+- The shader debug visualization in `block_layer_opaque.vsh` and `block_layer_opaque.fsh`
+- Fix `getVisibleFaces()` call to use `camera.intX/Y/Z` instead of `originX/Y/Z`
+
+### Step 4 — Clean up remaining warnings
+
+The mixin AP still emits ~28 warnings. Most are "Unable to determine descriptor" which the refmap handles at runtime. The ones that actually matter:
+
+- `OptionsScreenMixin.java` still has `method_19828` — a Yarn intermediary name. Needs lookup.
+- `VertexConsumerProviderImmediateMixin.java` has `method_24213` — same problem.
+- `SpriteContentsMixin.java` (mipmaps) has a Yarn path in an `@At(FIELD)` target.
+
+### Step 5 — Runtime testing
+
+Once terrain renders correctly:
+- Test with different biomes, structures, and underground
+- Test chunk loading/unloading while moving
+- Test translucent rendering (water, ice, stained glass)
+- Test Sodium's settings GUI
+- Test performance vs vanilla
+
+### Step 6 — Build a jar
 
 `./gradlew build` to produce a distributable jar for testing with Better MC.
 
 ---
 
-## Files touched (424 total, all unstaged)
+## Files touched (51 files modified since last commit)
 
 Everything is on branch `1.20.1/stable-0.5`, uncommitted.
 
-- **3 build files**: `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`
-- **~30 API sources**: `src/api/java/net/caffeinemc/mods/sodium/api/**`
-- **~380 main sources**: `src/main/java/me/jellysquid/mods/sodium/**`
-- **2 desktop sources**: `src/desktop/java/**`
-- **3 resource files**: mods.toml, accesstransformer.cfg, pack.mcmeta
-- **2 deleted files**: fabric.mod.json, sodium.accesswidener
-- **1 utility**: `remap.sed`
-- **116 files modified** since last commit (the method-level remapping pass)
+**Build system (1 file):**
+- `build.gradle.kts` — refmap copy task, duplicates strategy
+
+**Mod core (1 file):**
+- `SodiumClientMod.java` — `isConfigAvailable()` guard
+
+**Rendering pipeline (5 files, includes diagnostic code):**
+- `SodiumWorldRenderer.java` — debug logging
+- `DefaultChunkRenderer.java` — debug logging + face culling bug (originX vs camera.intX)
+- `RenderSectionManager.java` — occlusion culling disabled + debug logging
+- `BlockRenderer.java` — face visibility check order change (functionally equivalent to original)
+- `ChunkBuilderMeshingTask.java` — debug logging
+
+**Shaders (2 files, diagnostic only):**
+- `block_layer_opaque.vsh` — debug section color varying
+- `block_layer_opaque.fsh` — debug color blend
+
+**Mixin config (1 file):**
+- `sodium.mixins.json` — added `refmap` field
+
+**Mixin files (39 files):**
+- `MinecraftClientMixin.java` — `render` -> `runTick`, `onInitFinished` -> `setInitialScreen`, config guard
+- `WindowMixin.java` (core) — `handle` -> `window`, `require = 0`
+- `BlockColorsMixin.java` — `registerColorProvider` -> `register`
+- `BakedQuadMixin.java` — `vertexData` -> `vertices`, `colorIndex` -> `tintIndex`, `face` -> `direction`, lazy init
+- `FrustumMixin.java` — `x/y/z` -> `camX/camY/camZ`, `frustumIntersection` -> `intersection`
+- `OverlayVertexConsumerMixin.java` — `affine` -> `cameraInversePose`, `normalMatrix` -> `normalInversePose`
+- `VertexConsumerProviderImmediateMixin.java` — target method rename
+- `ChunkBuilderMixin.java` — target method rename
+- `WorldRendererMixin.java` (core) — `getClampedViewDistance` -> `getEffectiveRenderDistance`, `render` -> `renderLevel`
+- `PackedIntegerArrayMixin.java` — `elementBits` -> `bits`, `maxValue` -> `mask`, `storage` -> `data`
+- `ClientPlayNetworkHandlerMixin.java` — target method rename
+- `MultipartBakedModelMixin.java` — Forge 5-param getQuads, `components` -> `selectors`, `MultipartModelData.resolve()`
+- `WeightedBakedModelMixin.java` — Forge 5-param getQuads, `models` -> `list`
+- `LevelLoadingScreenMixin.java` — `tracker` -> `progressListener`
+- `MatrixStackMixin.java` — `stack` -> `poseStack`
+- `GlyphRendererMixin.java` — 8 @Shadow field renames
+- `FramebufferMixin.java` (compositing) — `colorAttachment` -> `colorTextureId`, `depthAttachment` -> `depthBufferId`, `viewWidth` -> `width`
+- `RenderLayersMixin.java` (model) — `layers` -> `TYPE_BY_BLOCK`, `layersByFluid` -> `TYPE_BY_FLUID`
+- `CuboidMixin.java` — field target rename
+- `PlayerSkinTextureMixin.java` — `textureLoaded` -> `uploaded`, method target rename
+- 18 other mixin files — minor @Shadow, @Inject, and @Redirect target renames
 
 ---
 
@@ -381,13 +479,13 @@ Everything is on branch `1.20.1/stable-0.5`, uncommitted.
 
 1. **The sed script was a blunt instrument.** It renamed Sodium's own classes along with Minecraft's. I caught ~35 files, but there could be subtler damage hiding in the code that compiles fine but breaks at runtime.
 
-2. **Mixin refmap might not resolve everything.** Even with 0 compile errors, the 24 "Unable to determine descriptor" warnings mean the mixin AP couldn't verify 24 targets at compile time. It's relying on the refmap to figure it out at runtime. If any of those method names are actually wrong, the mixin silently fails or crashes.
+2. **Mixin refmap might not resolve everything.** The 24 "Unable to determine descriptor" warnings mean the mixin AP couldn't verify 24 targets at compile time. If any of those method names are actually wrong, the mixin silently fails or crashes.
 
-3. **`OptionsScreenMixin.java` still has `method_19828`** — that's a Yarn intermediary name, not even a human-readable name. Needs to be looked up in the Yarn mappings and translated to Mojang.
+3. **`OptionsScreenMixin.java` still has `method_19828`** — a Yarn intermediary name. Needs to be looked up and translated to Mojang.
 
-4. **`VertexConsumerProviderImmediateMixin.java` has `method_24213`** — same problem, still an intermediary name.
+4. **`VertexConsumerProviderImmediateMixin.java` has `method_24213`** — same problem.
 
-5. **Access Transformer might be missing entries.** The `accesstransformer.cfg` was written from the original `sodium.accesswidener`, but I haven't verified every single entry maps correctly. The CloudRenderer fix already needed one AT entry added.
+5. **Access Transformer might be missing entries.** The `accesstransformer.cfg` was written from the original `sodium.accesswidener`, but not every entry has been verified. The CloudRenderer fix already needed one AT entry added.
 
 6. **Forge-specific hooks aren't wired up yet.** Still need to deal with:
    - Forge event bus registration
@@ -399,4 +497,4 @@ Everything is on branch `1.20.1/stable-0.5`, uncommitted.
 
 8. **`BlockEntity.getModelData()`** in `ClonedChunkSection.java` returns Forge's `ModelData` type, not `Object`. The code stores it as `Int2ReferenceMap<Object>` which might cause a ClassCastException downstream if anything expects a specific type.
 
-9. **Zero runtime testing so far.** `./gradlew compileJava` passes. `./gradlew build` has not been run. No idea if it actually works in-game yet.
+9. **BlockRenderer.getGeometry() calls 3-param getQuads.** Forge models override the 5-param version. The 3-param call may not dispatch through the Forge-patched method, which could cause blocks to return wrong or missing quads. This is a suspect for the terrain rendering issue.

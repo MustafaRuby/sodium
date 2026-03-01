@@ -17,7 +17,7 @@ import java.util.List;
 public class SpriteContentsInterpolationMixin {
     @Shadow
     @Final
-    private NativeImage[] images;
+    private NativeImage[] activeFrame;
 
     @Unique
     private SpriteContents parent;
@@ -56,7 +56,7 @@ public class SpriteContentsInterpolationMixin {
         // The mix factor between the current and next frame
         float mix = 1.0F - (float) accessor.getFrameTicks() / (float) animationFrame.getTime();
 
-        for (int layer = 0; layer < this.images.length; layer++) {
+        for (int layer = 0; layer < this.activeFrame.length; layer++) {
             int width = this.parent.width() >> layer;
             int height = this.parent.height() >> layer;
 
@@ -67,7 +67,7 @@ public class SpriteContentsInterpolationMixin {
             int nextY = ((nextIndex / animation2.getFrameRowSize()) * height);
 
             NativeImage src = ((SpriteContentsAccessor) this.parent).getImages()[layer];
-            NativeImage dst = this.images[layer];
+            NativeImage dst = this.activeFrame[layer];
 
             long ppSrcPixel = NativeImageHelper.getPointerRGBA(src);
             long ppDstPixel = NativeImageHelper.getPointerRGBA(dst);
@@ -98,6 +98,6 @@ public class SpriteContentsInterpolationMixin {
             }
         }
 
-        ((SpriteContentsInvoker) this.parent).invokeUpload(x, y, 0, 0, this.images);
+        ((SpriteContentsInvoker) this.parent).invokeUpload(x, y, 0, 0, this.activeFrame);
     }
 }

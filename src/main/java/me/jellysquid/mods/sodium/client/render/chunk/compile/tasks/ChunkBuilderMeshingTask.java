@@ -28,6 +28,7 @@ import net.minecraft.CrashReportCategory;
 import net.minecraft.core.BlockPos;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Rebuilds all the meshes of a chunk for each given render pass with non-occluded blocks. The result is then uploaded
@@ -37,6 +38,8 @@ import java.util.Map;
  * array allocations, they are pooled to ensure that the garbage collector doesn't become overloaded.
  */
 public class ChunkBuilderMeshingTask extends ChunkBuilderTask<ChunkBuildOutput> {
+    private static final AtomicInteger meshBuildDebugCounter = new AtomicInteger(0);
+
     private final RenderSection render;
     private final ChunkRenderContext renderContext;
 
@@ -144,6 +147,12 @@ public class ChunkBuilderMeshingTask extends ChunkBuilderTask<ChunkBuildOutput> 
                 meshes.put(pass, mesh);
                 renderData.addRenderPass(pass);
             }
+        }
+
+        if (!meshes.isEmpty() && meshBuildDebugCounter.getAndIncrement() < 20) {
+            org.slf4j.LoggerFactory.getLogger("Sodium-Debug").info(
+                "ChunkBuild: section=({},{},{}) meshPasses={}",
+                minX, minY, minZ, meshes.size());
         }
 
         renderData.setOcclusionData(occluder.resolve());

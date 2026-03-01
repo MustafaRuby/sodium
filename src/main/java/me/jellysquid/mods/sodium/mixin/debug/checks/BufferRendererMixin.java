@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(BufferUploader.class)
 public class BufferRendererMixin {
-    @Redirect(method = "drawWithGlobalProgram", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThreadOrInit()Z"))
+    @Redirect(method = "drawWithShader", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;isOnRenderThreadOrInit()Z"))
     private static boolean validateCurrentThread$draw() {
         return RenderAsserts.validateCurrentThread();
     }
